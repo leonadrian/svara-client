@@ -1,0 +1,10 @@
+{
+  "projectId": "apps-by-pro",
+  "appId": "1:655242255064:web:26a32a05c7bd978888d5ad",
+  "apiKey": "AIzaSyA3lj-LFbGGQj_H7H06ViQVSuaQ-FNrWk0",
+  "authDomain": "apps-by-pro.firebaseapp.com",
+  "firestoreDatabaseId": "pro-ecosystem-db",
+  "storageBucket": "apps-by-pro.firebasestorage.app",
+  "messagingSenderId": "655242255064",
+  "measurementId": ""
+}

@@ -1,0 +1,71 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Represents Svara application user (Trainer, Agent, Manager)",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "User UID matching auth" },
+        "email": { "type": "string", "description": "User's email" },
+        "name": { "type": "string", "description": "Display name" },
+        "role": { "type": "string", "enum": ["manager", "trainer", "agent"], "description": "Account role" },
+        "trainerId": { "type": "string", "description": "If agent, points to their designated trainer UID" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp" }
+      },
+      "required": ["id", "email", "name", "role", "createdAt"]
+    },
+    "Scenario": {
+      "title": "Scenario",
+      "description": "A business scenario (script) for roleplay training",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Document scenario ID" },
+        "category": { "type": "string", "enum": ["sales", "verification"], "description": "Business scenario category" },
+        "title": { "type": "string", "description": "Title of script scenario" },
+        "description": { "type": "string", "description": "Scenario objective description" },
+        "scriptText": { "type": "array", "description": "Array of script turn objects containing speaker, text, and optional intent" },
+        "mandatoryPoints": { "type": "array", "description": "Array of strings defining items the agent must state" },
+        "sellingPoints": { "type": "array", "description": "Array of product pitch points or selling items" },
+        "qualificationCriteria": { "type": "array", "description": "Array of conditions or questions for customer qualification" },
+        "createdBy": { "type": "string", "description": "UID of the trainer/manager who created it" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Created time" }
+      },
+      "required": ["id", "category", "title", "description", "scriptText", "mandatoryPoints", "sellingPoints", "qualificationCriteria", "createdBy", "createdAt"]
+    },
+    "Recording": {
+      "title": "Recording",
+      "description": "Structured roleplay session recording details",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Recording ID" },
+        "agentId": { "type": "string", "description": "Agent UID" },
+        "agentName": { "type": "string", "description": "Name of the agent" },
+        "trainerId": { "type": "string", "description": "Designated trainer UID or trainer participant UID" },
+        "trainerName": { "type": "string", "description": "Trainer name" },
+        "scenarioId": { "type": "string", "description": "Scenario ID linked" },
+        "scenarioTitle": { "type": "string", "description": "Title of the scenario" },
+        "scenarioCategory": { "type": "string", "description": "Category representation" },
+        "title": { "type": "string", "description": "Name/Title of this practice session" },
+        "type": { "type": "string", "enum": ["trainer_guided", "self_training"], "description": "Recording type" },
+        "audioUrl": { "type": "string", "description": "Storage download URL for the audio file" },
+        "duration": { "type": "number", "description": "Recording duration in seconds" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp of session" }
+      },
+      "required": ["id", "agentId", "agentName", "scenarioId", "scenarioTitle", "scenarioCategory", "title", "type", "createdAt"]
+    }
+  },
+  "firestore": {
+    "svara/users/profiles/{userId}": {
+      "schema": "User",
+      "description": "User profiles for auth validation and assignment lookup"
+    },
+    "svara/business-scenario/scenarios/{scenarioId}": {
+      "schema": "Scenario",
+      "description": "Available roleplay scenario business definitions"
+    },
+    "svara/recordings/sessions/{recordingId}": {
+      "schema": "Recording",
+      "description": "Roleplay audio recording files tracks and sessions"
+    }
+  }
+}

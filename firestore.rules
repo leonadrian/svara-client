@@ -1,0 +1,121 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Catch-All Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Returns whether uid holds a manager or superadmin profile in Firestore Svara ecosystem
+    function isManager(uid) {
+      return exists(/databases/$(database)/documents/svara/users/profiles/$(uid)) &&
+             (get(/databases/$(database)/documents/svara/users/profiles/$(uid)).data.role == 'manager' ||
+              get(/databases/$(database)/documents/svara/users/profiles/$(uid)).data.role == 'superadmin');
+    }
+
+    // Returns whether uid holds a trainer profile in Firestore Svara ecosystem
+    function isTrainer(uid) {
+      return exists(/databases/$(database)/documents/svara/users/profiles/$(uid)) &&
+             get(/databases/$(database)/documents/svara/users/profiles/$(uid)).data.role == 'trainer';
+    }
+
+    // Returns whether trainerUid is the designated supervisor for agentUid
+    function isTrainerOfAgent(trainerUid, agentUid) {
+      return exists(/databases/$(database)/documents/svara/users/profiles/$(agentUid)) &&
+             get(/databases/$(database)/documents/svara/users/profiles/$(agentUid)).data.get('assignedTrainer', '') == trainerUid;
+    }
+
+    function isValidUser(data) {
+      return data.id is string &&
+             data.email is string &&
+             data.name is string &&
+             data.role is string &&
+             (data.role == 'manager' || data.role == 'trainer' || data.role == 'agent') &&
+             data.createdAt is string;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    // User Profile security
+    match /svara/users/profiles/{userId} {
+      allow read: if isSignedIn();
+
+      allow create: if isSignedIn() && request.auth.uid == userId;
+
+      allow update: if isSignedIn() && (
+        isManager(request.auth.uid) ||
+        (request.auth.uid == userId && incoming().role == resource.data.role)
+      );
+
+      allow delete: if isSignedIn() && isManager(request.auth.uid);
+    }
+
+    // Scenario Script security
+    match /svara/business-scenario/scenarios/{scenarioId} {
+      allow read: if isSignedIn();
+
+      allow create: if isSignedIn() && (
+        isManager(request.auth.uid) ||
+        isTrainer(request.auth.uid)
+      ) &&
+      request.resource.data.keys().hasAll(['scenarioId', 'category', 'title', 'description', 'scenarioPoints', 'sentences', 'createdBy', 'createdAt']) &&
+      request.resource.data.createdBy == request.auth.uid;
+
+      allow update: if isSignedIn() && (
+        isManager(request.auth.uid) ||
+        (isTrainer(request.auth.uid) && resource.data.createdBy == request.auth.uid)
+      );
+
+      allow delete: if isSignedIn() && (
+        isManager(request.auth.uid) ||
+        (isTrainer(request.auth.uid) && resource.data.createdBy == request.auth.uid)
+      );
+    }
+
+    // Recording Session security
+    match /svara/recordings/sessions/{recordingId} {
+      allow get: if isSignedIn() && (
+        resource.data.agentSnapshot.agentId == request.auth.uid ||
+        resource.data.agentSnapshot.assignedTrainerId == request.auth.uid ||
+        isManager(request.auth.uid) ||
+        (isTrainer(request.auth.uid) && resource.data.agentSnapshot.agentId != null && resource.data.agentSnapshot.agentId != '' && resource.data.agentSnapshot.agentId != 'unregistered' && isTrainerOfAgent(request.auth.uid, resource.data.agentSnapshot.agentId))
+      );
+
+      // List allows authenticated read for filtering, queries must be scoped to agent/trainer/manager roles
+      allow list: if isSignedIn() && (
+        isManager(request.auth.uid) ||
+        resource.data.agentSnapshot.agentId == request.auth.uid ||
+        resource.data.agentSnapshot.assignedTrainerId == request.auth.uid
+      );
+
+      allow create: if isSignedIn() && (
+        request.resource.data.agentSnapshot.agentId == request.auth.uid ||
+        request.resource.data.agentSnapshot.assignedTrainerId == request.auth.uid ||
+        isTrainer(request.auth.uid) ||
+        isManager(request.auth.uid)
+      ) &&
+      request.resource.data.keys().hasAll(['id', 'recordedBy', 'startedAt', 'endedAt', 'agentSnapshot', 'scenarioSnapshot', 'audioUrl', 'audioMetaData']);
+
+      allow update: if isSignedIn() && (
+        isManager(request.auth.uid) ||
+        resource.data.agentSnapshot.agentId == request.auth.uid ||
+        resource.data.agentSnapshot.assignedTrainerId == request.auth.uid ||
+        (isTrainer(request.auth.uid) && resource.data.agentSnapshot.agentId != null && resource.data.agentSnapshot.agentId != '' && resource.data.agentSnapshot.agentId != 'unregistered' && isTrainerOfAgent(request.auth.uid, resource.data.agentSnapshot.agentId))
+      );
+
+      allow delete: if isSignedIn() && (
+        isManager(request.auth.uid) ||
+        resource.data.agentSnapshot.agentId == request.auth.uid ||
+        (isTrainer(request.auth.uid) && resource.data.agentSnapshot.assignedTrainerId == request.auth.uid)
+      );
+    }
+  }
+}

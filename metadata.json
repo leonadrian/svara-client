@@ -1,0 +1,6 @@
+{
+  "name": "Svara",
+  "description": "A platform for training phone agents on business scenarios, featuring roleplay simulations and recording reviews for trainers, agents, and managers.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
