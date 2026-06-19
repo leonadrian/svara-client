@@ -2,7 +2,7 @@ import React from 'react';
 import { 
   PlayCircle, Eye, Shield, Plus, Search, BookOpen, Clock, Calendar, User 
 } from 'lucide-react';
-import { BusinessScenario } from '../types/business-scenario';
+import { BusinessScenario } from '../types/index';
 
 interface ScenarioViewerRenderProps {
   filteredScenarios: BusinessScenario[];

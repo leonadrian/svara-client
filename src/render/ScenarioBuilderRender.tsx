@@ -7,9 +7,9 @@ import {
   ScenarioSentence, 
   AgentSentence, 
   CustomerSentence, 
-  CustomerResponseCategory 
-} from '../types/business-scenario';
-import { UserProfile } from '../types/index';
+  CustomerResponseCategory,
+  UserProfile
+} from '../types/index';
 
 export interface ScenarioBuilderRenderProps {
   userId: string;

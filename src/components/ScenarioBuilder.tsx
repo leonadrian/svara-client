@@ -1,6 +1,6 @@
 import React from 'react';
 import { useScenarioBuilder } from '../hooks/useScenario';
-import { BusinessScenario } from '../types/business-scenario';
+import { BusinessScenario } from '../types/index';
 import { ScenarioBuilderRender } from '../render/ScenarioBuilderRender';
 
 interface ScenarioBuilderProps {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { BusinessScenario } from '../types/business-scenario';
+import { BusinessScenario } from '../types/index';
 import { useScenarioViewer } from '../hooks/useScenario';
 import { ScenarioViewerRender } from '../render/ScenarioViewerRender';
 

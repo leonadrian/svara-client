@@ -1,8 +1,6 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { 
-  UserProfile 
-} from '../types/index';
-import { 
+  UserProfile,
   BusinessScenario, 
   ScenarioPoint, 
   ScenarioSentence, 
@@ -10,7 +8,7 @@ import {
   CustomerSentence, 
   ScenarioCategory, 
   CustomerResponseCategory 
-} from '../types/business-scenario';
+} from '../types/index';
 import { useServices } from '../services/ServiceContext';
 
 // --- 1. Scenario Builder Hook ---
