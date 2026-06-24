@@ -1,8 +1,9 @@
 import React, { createContext, useContext, useMemo, ReactNode } from 'react';
 import { IServiceRegistry } from './interfaces';
-import { FirestoreUserService } from './firestore/FirestoreUserService';
-import { FirestoreScenarioService } from './firestore/FirestoreScenarioService';
-import { FirestoreRecordingService } from './firestore/FirestoreRecordingService';
+import { UserApiService } from './rest/UserApiService';
+import { ScenarioApiService } from './rest/ScenarioApiService';
+import { RecordingApiService } from './rest/RecordingApiService';
+import { FirebaseStorageAdapter } from './rest/FirebaseStorageAdapter';
 
 const ServiceContext = createContext<IServiceRegistry | null>(null);
 
@@ -12,11 +13,12 @@ interface ServiceProviderProps {
 
 export function ServiceProvider({ children }: ServiceProviderProps) {
   const services = useMemo<IServiceRegistry>(() => {
-    console.info('🔌 [DI Container] Swapping in real-time Firestore database adapters.');
+    console.info('🔌 [DI Container] Swapping in server-side REST API adapters.');
     return {
-      userService: new FirestoreUserService(),
-      scenarioService: new FirestoreScenarioService(),
-      recordingService: new FirestoreRecordingService(),
+      userService: new UserApiService(),
+      scenarioService: new ScenarioApiService(),
+      recordingService: new RecordingApiService(),
+      storageService: new FirebaseStorageAdapter(),
     };
   }, []);
 

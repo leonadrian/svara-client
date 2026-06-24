@@ -14,21 +14,21 @@ service cloud.firestore {
 
     // Returns whether uid holds a manager or superadmin profile in Firestore Svara ecosystem
     function isManager(uid) {
-      return exists(/databases/$(database)/documents/svara/users/profiles/$(uid)) &&
-             (get(/databases/$(database)/documents/svara/users/profiles/$(uid)).data.role == 'manager' ||
-              get(/databases/$(database)/documents/svara/users/profiles/$(uid)).data.role == 'superadmin');
+      return exists(/databases/$(database)/documents/svara/data/user-profiles/$(uid)) &&
+             (get(/databases/$(database)/documents/svara/data/user-profiles/$(uid)).data.role == 'manager' ||
+              get(/databases/$(database)/documents/svara/data/user-profiles/$(uid)).data.role == 'superadmin');
     }
 
     // Returns whether uid holds a trainer profile in Firestore Svara ecosystem
     function isTrainer(uid) {
-      return exists(/databases/$(database)/documents/svara/users/profiles/$(uid)) &&
-             get(/databases/$(database)/documents/svara/users/profiles/$(uid)).data.role == 'trainer';
+      return exists(/databases/$(database)/documents/svara/data/user-profiles/$(uid)) &&
+             get(/databases/$(database)/documents/svara/data/user-profiles/$(uid)).data.role == 'trainer';
     }
 
     // Returns whether trainerUid is the designated supervisor for agentUid
     function isTrainerOfAgent(trainerUid, agentUid) {
-      return exists(/databases/$(database)/documents/svara/users/profiles/$(agentUid)) &&
-             get(/databases/$(database)/documents/svara/users/profiles/$(agentUid)).data.get('assignedTrainer', '') == trainerUid;
+      return exists(/databases/$(database)/documents/svara/data/user-profiles/$(agentUid)) &&
+             get(/databases/$(database)/documents/svara/data/user-profiles/$(agentUid)).data.get('assignedTrainer', '') == trainerUid;
     }
 
     function isValidUser(data) {
@@ -45,7 +45,7 @@ service cloud.firestore {
     }
 
     // User Profile security
-    match /svara/users/profiles/{userId} {
+    match /svara/data/user-profiles/{userId} {
       allow read: if isSignedIn();
 
       allow create: if isSignedIn() && request.auth.uid == userId;
@@ -59,7 +59,7 @@ service cloud.firestore {
     }
 
     // Scenario Script security
-    match /svara/business-scenario/scenarios/{scenarioId} {
+    match /svara/data/scenarios/{scenarioId} {
       allow read: if isSignedIn();
 
       allow create: if isSignedIn() && (
@@ -81,7 +81,7 @@ service cloud.firestore {
     }
 
     // Recording Session security
-    match /svara/recordings/sessions/{recordingId} {
+    match /svara/data/recordings/{recordingId} {
       allow get: if isSignedIn() && (
         resource.data.agentSnapshot.agentId == request.auth.uid ||
         resource.data.agentSnapshot.assignedTrainerId == request.auth.uid ||

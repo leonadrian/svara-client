@@ -34,7 +34,7 @@ export function renderHighlightedText(text: string) {
           return (
             <span 
               key={index} 
-              className="mx-1 px-2.5 py-0.5 rounded-md font-extrabold font-mono text-xs bg-amber-950/95 text-yellow-400 border border-amber-500/60 shadow-[0_0_10px_rgba(245,158,11,0.55)] bracket-breathing inline-block align-middle select-none"
+              className="mx-1 px-2.5 py-0.5 rounded-md font-extrabold font-mono text-xs bg-amber-50 text-amber-800 border border-amber-200 shadow-[0_0_10px_rgba(245,158,11,0.25)] bracket-breathing inline-block align-middle select-none"
             >
               {part}
             </span>

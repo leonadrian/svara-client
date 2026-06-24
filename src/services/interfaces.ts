@@ -32,8 +32,15 @@ export interface IRecordingService {
   subscribeRecordings(userProfile: UserProfile, onUpdate: (recordings: RecordingSession[]) => void, onError?: (err: any) => void): () => void;
 }
 
+export interface IStorageService {
+  uploadFile(path: string, file: Blob, mimeType?: string): Promise<string>;
+  getDownloadUrl(path: string): Promise<string>;
+}
+
 export interface IServiceRegistry {
   userService: IUserService;
   scenarioService: IScenarioService;
   recordingService: IRecordingService;
+  storageService: IStorageService;
 }
+

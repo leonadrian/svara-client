@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { 
   Mic, StopCircle, Play, Pause, Save, CheckCircle2, ChevronRight,
-  Award, Clock, Check, Volume2, X, AlignLeft, Info, Settings, Star
+  Award, Clock, Check, Volume2, X, AlignLeft, Info, Settings, Star, Sparkles
 } from 'lucide-react';
 import { BusinessScenario, UserProfile } from '../types/index';
 import { renderHighlightedText } from '../utils';
@@ -20,6 +20,7 @@ export interface SvaraStudioRenderProps {
   isSimulationStarted: boolean;
   isFinished: boolean;
   isRecording: boolean;
+  isConverting?: boolean;
   recordingSeconds: number;
   audioUrl: string | null;
   isPlayingBack: boolean;
@@ -50,6 +51,7 @@ export function SvaraStudioRender({
   isSimulationStarted,
   isFinished,
   isRecording,
+  isConverting = false,
   recordingSeconds,
   audioUrl,
   isPlayingBack,
@@ -322,6 +324,16 @@ export function SvaraStudioRender({
                         )}
                       </div>
 
+                      {turn.preface && (
+                        <div className="bg-amber-50/70 border border-amber-250/50 rounded-xl p-3.5 text-xs text-amber-800 font-semibold mb-3 leading-relaxed text-left flex items-start gap-2 shadow-xxs">
+                          <Sparkles className="h-3.5 w-3.5 text-amber-600 shrink-0 mt-0.5 animate-pulse" />
+                          <div className="flex-1">
+                            <span className="text-[9px] font-black text-amber-900 uppercase tracking-wider block mb-0.5">Strategi Komunikasi / Preface:</span>
+                            "{turn.preface}"
+                          </div>
+                        </div>
+                      )}
+
                       <p className={`text-sm md:text-base font-medium leading-relaxed text-slate-850 ${isAgent ? 'text-left font-semibold' : 'text-left'}`}>
                         "{renderHighlightedText(turn.text || '')}"
                       </p>
@@ -375,6 +387,16 @@ export function SvaraStudioRender({
                           </div>
                         </div>
                       )}
+
+                      {turn.postscript && (
+                        <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-xs text-slate-550 font-semibold mt-3 leading-relaxed text-left flex items-start gap-2 shadow-xxs">
+                          <Info className="h-3.5 w-3.5 text-slate-400 shrink-0 mt-0.5" />
+                          <div className="flex-1">
+                            <span className="text-[9px] font-black text-slate-600 uppercase tracking-wider block mb-0.5">Insight Lanjutan / Postscript:</span>
+                            "{turn.postscript}"
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -399,8 +421,13 @@ export function SvaraStudioRender({
               </p>
             </div>
 
-            {/* Audio review playback */}
-            {audioUrl && (
+            {/* Audio review playback or processing state */}
+            {isConverting ? (
+              <div className="w-full max-w-md mx-auto bg-slate-50 border border-slate-200 rounded-2xl p-5 flex items-center justify-center gap-3 shadow-xs animate-pulse">
+                <div className="animate-spin rounded-full h-5 w-5 border-2 border-brand-600 border-t-transparent"></div>
+                <span className="text-xs font-black text-slate-600">Memproses rekaman...</span>
+              </div>
+            ) : audioUrl ? (
               <div className="w-full max-w-md mx-auto bg-white border border-slate-200/95 rounded-2xl p-5 flex items-center justify-between shadow-xs">
                 <div className="flex items-center gap-3 text-left">
                   <div className="p-3 bg-brand-50 text-brand-600 rounded-xl">
@@ -429,7 +456,7 @@ export function SvaraStudioRender({
                   )}
                 </button>
               </div>
-            )}
+            ) : null}
 
             {error && (
               <div className="w-full max-w-md mx-auto text-xs text-rose-600 bg-rose-50 p-3 rounded-xl border border-rose-100 font-semibold leading-relaxed text-left">
@@ -441,14 +468,15 @@ export function SvaraStudioRender({
               <button
                 type="button"
                 onClick={restartSimulation}
-                className="py-3 px-6 border border-slate-300 hover:bg-slate-100 bg-white text-slate-700 font-bold rounded-2xl text-xs transition-colors cursor-pointer"
+                disabled={saving || isConverting}
+                className="py-3 px-6 border border-slate-300 hover:bg-slate-100 bg-white text-slate-700 font-bold rounded-2xl text-xs transition-colors cursor-pointer disabled:opacity-45"
               >
                 Ulangi Latihan
               </button>
               <button
                 type="button"
                 onClick={saveRoleplayRecording}
-                disabled={saving}
+                disabled={saving || isConverting}
                 className="py-3 px-8 bg-brand-600 hover:bg-brand-700 text-white font-black rounded-2xl text-xs shadow-md transition-all cursor-pointer flex items-center gap-2 disabled:opacity-45 h-11"
               >
                 <Save className="h-4.5 w-4.5" />

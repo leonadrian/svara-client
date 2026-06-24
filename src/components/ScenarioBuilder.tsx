@@ -12,6 +12,7 @@ interface ScenarioBuilderProps {
   isReadOnly?: boolean;
   onStartRoleplay?: () => void;
   onEditScenario?: () => void;
+  scenarios?: BusinessScenario[];
 }
 
 export default function ScenarioBuilder({ 
@@ -22,7 +23,8 @@ export default function ScenarioBuilder({
   userRole,
   isReadOnly = false,
   onStartRoleplay,
-  onEditScenario
+  onEditScenario,
+  scenarios
 }: ScenarioBuilderProps) {
   const builderState = useScenarioBuilder({
     userId,
@@ -41,6 +43,7 @@ export default function ScenarioBuilder({
       isReadOnly={isReadOnly}
       onStartRoleplay={onStartRoleplay}
       onEditScenario={onEditScenario}
+      scenarios={scenarios}
       {...builderState}
     />
   );

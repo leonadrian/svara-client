@@ -89,6 +89,9 @@ export function useScenarioBuilder({
   const [newResponseType, setNewResponseType] = useState<CustomerResponseCategory>('general'); 
   const [newSelectedPointIds, setNewSelectedPointIds] = useState<string[]>([]); 
 
+  const [newPreface, setNewPreface] = useState('');
+  const [newPostscript, setNewPostscript] = useState('');
+
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -104,6 +107,42 @@ export function useScenarioBuilder({
   const [editIntent, setEditIntent] = useState('');
   const [editResponseType, setEditResponseType] = useState<CustomerResponseCategory>('general');
   const [editSelectedPointIds, setEditSelectedPointIds] = useState<string[]>([]);
+
+  const [editPreface, setEditPreface] = useState('');
+  const [editPostscript, setEditPostscript] = useState('');
+
+  const [isTemplateActive, setIsTemplateActive] = useState(false);
+
+  const loadTemplate = (base: BusinessScenario) => {
+    setTitle(`${base.title} (Salinan)`);
+    setCategory(base.category);
+    setDescription(base.description);
+    
+    // Copy checklist points
+    setMandatoryPoints(
+      base.scenarioPoints
+        .filter(p => p.pointType === 'mandatory')
+        .map(p => ({ pointId: p.pointId, pointName: p.pointName }))
+    );
+    setSellingPoints(
+      base.scenarioPoints
+        .filter(p => p.pointType === 'key_point')
+        .map(p => ({ pointId: p.pointId, pointName: p.pointName }))
+    );
+    setQualificationCriteria(
+      base.scenarioPoints
+        .filter(p => p.pointType === 'qualification')
+        .map(p => ({ pointId: p.pointId, pointName: p.pointName }))
+    );
+
+    // Copy sentences
+    setSentences(base.sentences.map(sen => ({
+      ...sen,
+      scenarioId: ''
+    })));
+
+    setIsTemplateActive(true);
+  };
 
   useEffect(() => {
     if (userRole !== 'manager') return;
@@ -151,7 +190,9 @@ export function useScenarioBuilder({
         speaker: 'agent',
         text: newText.trim(),
         intentIds: newIntent.trim() ? [newIntent.trim()] : [],
-        scenarioPointIds: [...newSelectedPointIds]
+        scenarioPointIds: [...newSelectedPointIds],
+        preface: newPreface.trim() ? newPreface.trim() : undefined,
+        postscript: newPostscript.trim() ? newPostscript.trim() : undefined
       } as AgentSentence;
     } else {
       newSentence = {
@@ -160,7 +201,9 @@ export function useScenarioBuilder({
         sequence: sentences.length + 1,
         speaker: 'customer',
         text: newText.trim(),
-        responseType: newResponseType
+        responseType: newResponseType,
+        preface: newPreface.trim() ? newPreface.trim() : undefined,
+        postscript: newPostscript.trim() ? newPostscript.trim() : undefined
       } as CustomerSentence;
     }
 
@@ -168,6 +211,8 @@ export function useScenarioBuilder({
     setNewText('');
     setNewIntent('');
     setNewSelectedPointIds([]);
+    setNewPreface('');
+    setNewPostscript('');
     setNewSpeaker(newSpeaker === 'customer' ? 'agent' : 'customer');
   };
 
@@ -198,6 +243,8 @@ export function useScenarioBuilder({
     setEditingIndex(index);
     setEditSpeaker(sen.speaker);
     setEditText(sen.text);
+    setEditPreface(sen.preface || '');
+    setEditPostscript(sen.postscript || '');
     if (sen.speaker === 'agent') {
       setEditIntent(sen.intentIds?.[0] || '');
       setEditResponseType('general');
@@ -220,6 +267,8 @@ export function useScenarioBuilder({
         ...target,
         speaker: 'agent',
         text: editText.trim(),
+        preface: editPreface.trim() ? editPreface.trim() : undefined,
+        postscript: editPostscript.trim() ? editPostscript.trim() : undefined,
         intentIds: editIntent.trim() ? [editIntent.trim()] : [],
         scenarioPointIds: [...editSelectedPointIds]
       } as AgentSentence;
@@ -228,6 +277,8 @@ export function useScenarioBuilder({
         ...target,
         speaker: 'customer',
         text: editText.trim(),
+        preface: editPreface.trim() ? editPreface.trim() : undefined,
+        postscript: editPostscript.trim() ? editPostscript.trim() : undefined,
         responseType: editResponseType
       } as CustomerSentence;
     }
@@ -426,6 +477,14 @@ export function useScenarioBuilder({
     setEditResponseType,
     editSelectedPointIds,
     setEditSelectedPointIds,
+    newPreface,
+    setNewPreface,
+    newPostscript,
+    setNewPostscript,
+    editPreface,
+    setEditPreface,
+    editPostscript,
+    setEditPostscript,
     addSentence,
     removeSentence,
     moveSentence,
@@ -437,6 +496,8 @@ export function useScenarioBuilder({
     removeSellingPoint,
     addQualification,
     removeQualification,
+    isTemplateActive,
+    loadTemplate,
     handleSubmit
   };
 }

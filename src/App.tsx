@@ -408,6 +408,7 @@ function AppContent() {
           userId={currentUserProfile.userId}
           editingScenario={editingScenario}
           userRole={currentUserProfile.role}
+          scenarios={scenarios}
           onClose={() => {
             setIsScenarioBuilderOpen(false);
             setEditingScenario(null);
@@ -460,6 +461,7 @@ function AppContent() {
           userRole={currentUserProfile?.role || 'agent'}
           editingScenario={activeDetailScenario}
           isReadOnly={true}
+          scenarios={scenarios}
           onClose={() => setActiveDetailScenario(null)}
           onStartRoleplay={() => {
             setActiveSimulatorScenario(activeDetailScenario);

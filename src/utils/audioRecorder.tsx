@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { BusinessScenario, UserProfile, RecordingSessionStoredLocally } from '../types/index';
 import { saveLocalRecording } from '../localDb';
+import { convertWebmToMp3 } from './audioConverter';
 
 export interface UseAudioRecorderOptions {
   activeScenario: BusinessScenario | null;
@@ -14,6 +15,7 @@ export function useAudioRecorder(options: UseAudioRecorderOptions) {
   const { activeScenario, userProfile, isTrainerRole, selectedAgent, onStopCallback } = options;
 
   const [isRecording, setIsRecording] = useState(false);
+  const [isConverting, setIsConverting] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
@@ -95,16 +97,32 @@ export function useAudioRecorder(options: UseAudioRecorderOptions) {
       };
 
       mediaRecorder.onstop = async () => {
-        const blob = new Blob(audioChunksRef.current, { type: mediaRecorder.mimeType || 'audio/webm' });
-        setAudioBlob(blob);
-        const url = URL.createObjectURL(blob);
-        setAudioUrl(url);
+        const rawWebmBlob = new Blob(audioChunksRef.current, { type: mediaRecorder.mimeType || 'audio/webm' });
 
         // Stop all audio tracks to free mic resource
         stream.getTracks().forEach((track) => track.stop());
 
         // Calculate precise elapsed duration to avoid stale React closure values
         const preciseDuration = Math.round((Date.now() - startTimeRef.current) / 1000) || 5;
+
+        setIsConverting(true);
+        let finalBlob = rawWebmBlob;
+        let ext = 'webm';
+
+        try {
+          console.log("Mulai konversi rekaman ke MP3...");
+          finalBlob = await convertWebmToMp3(rawWebmBlob);
+          ext = 'mp3';
+          console.log("Konversi ke MP3 sukses! Ukuran berkas:", finalBlob.size);
+        } catch (err) {
+          console.warn("Gagal konversi ke MP3, menggunakan fallback WebM asli:", err);
+        } finally {
+          setIsConverting(false);
+        }
+
+        setAudioBlob(finalBlob);
+        const url = URL.createObjectURL(finalBlob);
+        setAudioUrl(url);
 
         // AUTO-SAVE to local DB as backup offline buffer immediately!
         try {
@@ -127,22 +145,22 @@ export function useAudioRecorder(options: UseAudioRecorderOptions) {
             recordedBy: userProfile.userId,
             audioUrl: null,
             audioMetaData: {
-              fileName: `svara_${tempId}.webm`,
-              fileSizeByte: blob.size,
+              fileName: `svara_${tempId}.${ext}`,
+              fileSizeByte: finalBlob.size,
               durationSeconds: preciseDuration,
-              mimeType: blob.type || 'audio/webm',
+              mimeType: finalBlob.type || `audio/${ext}`,
               createdAt: new Date().toISOString()
             },
             localAudioRef: null
           };
-          await saveLocalRecording(metadata, blob);
+          await saveLocalRecording(metadata, finalBlob);
           console.log("Offline backup successfully saved inside client IndexedDB:", tempId);
         } catch (localSaveErr) {
           console.warn("Failed saving background backup to offline store:", localSaveErr);
         }
 
         if (onStopCallback) {
-          onStopCallback(blob, url);
+          onStopCallback(finalBlob, url);
         }
       };
 
@@ -210,6 +228,7 @@ export function useAudioRecorder(options: UseAudioRecorderOptions) {
 
   return {
     isRecording,
+    isConverting,
     recordingSeconds,
     audioUrl,
     setAudioUrl,

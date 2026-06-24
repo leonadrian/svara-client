@@ -1,6 +1,4 @@
 import { useState, useEffect, useRef, FormEvent } from 'react';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from '../firebase';
 import { useServices } from '../services/ServiceContext';
 import { UserProfile, BusinessScenario, RecordingSession, RecordingSessionStoredLocally } from '../types/index';
 import { 
@@ -19,6 +17,15 @@ interface UseRecordingSessionViewerOptions {
   onRefreshCloud?: () => void;
 }
 
+const getExtensionFromMime = (mimeType?: string): string => {
+  if (!mimeType) return 'webm';
+  if (mimeType.includes('mp3') || mimeType.includes('mpeg')) return 'mp3';
+  if (mimeType.includes('webm')) return 'webm';
+  if (mimeType.includes('ogg')) return 'ogg';
+  if (mimeType.includes('wav')) return 'wav';
+  return 'webm';
+};
+
 export function useRecordingSessionViewer({
   userProfile,
   scenarios,
@@ -26,7 +33,7 @@ export function useRecordingSessionViewer({
   userNamesMap = {},
   onRefreshCloud
 }: UseRecordingSessionViewerOptions) {
-  const { userService, recordingService } = useServices();
+  const { userService, recordingService, storageService } = useServices();
   const isAgent = userProfile.role === 'agent';
 
   const [localRecordings, setLocalRecordings] = useState<any[]>([]);
@@ -267,9 +274,8 @@ export function useRecordingSessionViewer({
         throw new Error("Data audio lokal atau metadata tidak ditemukan di database.");
       }
 
-      const fileRef = ref(storage, `svara-recordings/${recId}.webm`);
-      const snapshot = await uploadBytes(fileRef, localAudioBlob);
-      const cloudAudioUrl = await getDownloadURL(snapshot.ref);
+      const ext = getExtensionFromMime(localAudioBlob.type);
+      const cloudAudioUrl = await storageService.uploadFile(`svara/recordings/${recId}.${ext}`, localAudioBlob, localAudioBlob.type || `audio/${ext}`);
 
       const rId = localMeta.agentSnapshot?.agentId || (localMeta as any).agentId || userProfile.userId;
       const rName = localMeta.agentSnapshot?.agentName || userNamesMap?.[rId] || userProfile.userName;
@@ -295,10 +301,10 @@ export function useRecordingSessionViewer({
         },
         audioUrl: cloudAudioUrl,
         audioMetaData: {
-          fileName: `${recId}.webm`,
+          fileName: `${recId}.${getExtensionFromMime(localAudioBlob.type)}`,
           fileSizeByte: localAudioBlob.size,
           durationSeconds: localMeta.audioMetaData?.durationSeconds || localMeta.duration || 12,
-          mimeType: localAudioBlob.type || 'audio/webm',
+          mimeType: localAudioBlob.type || `audio/${getExtensionFromMime(localAudioBlob.type)}`,
           createdAt: localMeta.audioMetaData?.createdAt || localMeta.startedAt || localMeta.createdAt || new Date().toISOString(),
           uploadedAt: new Date().toISOString()
         },
@@ -590,7 +596,7 @@ export function useSvaraStudioSimulation({
   onSuccess,
   preselectedAgentId
 }: UseSvaraStudioSimulationOptions) {
-  const { recordingService } = useServices();
+  const { recordingService, storageService } = useServices();
 
   const isTrainerRole = userProfile.role === 'trainer' || userProfile.role === 'manager';
 
@@ -701,13 +707,12 @@ export function useSvaraStudioSimulation({
     let finalAudioUrl = '';
 
     if (recorder.audioBlob) {
+      const ext = getExtensionFromMime(recorder.audioBlob.type);
       try {
-        const fileRef = ref(storage, `svara-recordings/${recordingId}.webm`);
-        const snapshot = await uploadBytes(fileRef, recorder.audioBlob);
-        finalAudioUrl = await getDownloadURL(snapshot.ref);
+        finalAudioUrl = await storageService.uploadFile(`svara/recordings/${recordingId}.${ext}`, recorder.audioBlob, recorder.audioBlob.type || `audio/${ext}`);
       } catch (storageErr) {
         console.warn("Storage upload failed. Storing with local object link:", storageErr);
-        finalAudioUrl = `https://storage.googleapis.com/apps-by-pro.firebasestorage.app/svara-recordings/${recordingId}.webm`;
+        finalAudioUrl = `https://storage.googleapis.com/apps-by-pro.firebasestorage.app/svara/recordings/${recordingId}.${ext}`;
       }
     }
 
@@ -739,10 +744,10 @@ export function useSvaraStudioSimulation({
       },
       audioUrl: finalAudioUrl,
       audioMetaData: {
-        fileName: `svara_${recordingId}.webm`,
+        fileName: `svara_${recordingId}.${getExtensionFromMime(recorder.audioBlob?.type)}`,
         fileSizeByte: recorder.audioBlob?.size || 0,
         durationSeconds: recorder.recordingSeconds || 12,
-        mimeType: recorder.audioBlob?.type || 'audio/webm',
+        mimeType: recorder.audioBlob?.type || `audio/${getExtensionFromMime(recorder.audioBlob?.type)}`,
         createdAt: new Date().toISOString()
       }
     };

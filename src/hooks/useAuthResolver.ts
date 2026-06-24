@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { 
   signInWithPopup, 
+  signInWithRedirect,
   GoogleAuthProvider, 
   onAuthStateChanged,
   User as FirebaseUser
@@ -58,10 +59,18 @@ export function useAuthResolver({ onProfileSynced }: UseAuthResolverProps) {
     setError(null);
     setLoading(true);
     const provider = new GoogleAuthProvider();
+    
+    // Check if the user is on a mobile device
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
     try {
-      await signInWithPopup(auth, provider);
+      if (isMobile) {
+        await signInWithRedirect(auth, provider);
+      } else {
+        await signInWithPopup(auth, provider);
+      }
     } catch (err: any) {
-      console.error("Google Sign-In failed or was blocked by sandbox iframe constraints: ", err);
+      console.error("Google Sign-In failed or was blocked: ", err);
       setError("Gagal masuk dengan Google atau pendaftaran dibatalkan. Pastikan pop-up diperbolehkan di peramban Anda.");
       setLoading(false);
     }
