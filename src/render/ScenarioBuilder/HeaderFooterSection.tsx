@@ -32,7 +32,7 @@ export function HeaderSection({ labels, isReadOnly, editingScenario, onClose }: 
       <button
         type="button"
         onClick={onClose}
-        className="text-gray-400 hover:text-gray-650 bg-white hover:bg-gray-100 p-1.5 rounded-lg border border-gray-250 transition-all cursor-pointer"
+        className="text-gray-400 hover:text-gray-600 bg-white hover:bg-gray-100 p-1.5 rounded-lg border border-gray-250 transition-all cursor-pointer"
       >
         <X className="h-4 w-4" />
       </button>
@@ -52,10 +52,13 @@ export interface FooterSectionProps {
   onEditScenario?: () => void;
   onStartRoleplay?: () => void;
   handleSubmit: (e: React.FormEvent) => void;
+  userRole?: string;
+  onViewJson?: () => void;
+  onPrint?: () => void;
 }
 
 export function FooterSection({
-  labels, isReadOnly, submitting, onClose, onEditScenario, onStartRoleplay, handleSubmit
+  labels, isReadOnly, submitting, onClose, onEditScenario, onStartRoleplay, handleSubmit, userRole, onViewJson, onPrint
 }: FooterSectionProps) {
   return (
     <div className="px-6 py-4.5 border-t border-gray-100 bg-gray-50 flex items-center justify-end gap-3.5">
@@ -68,6 +71,26 @@ export function FooterSection({
           >
             {labels.backToCatalogText}
           </button>
+
+          {userRole && userRole !== 'agent' && onPrint && (
+            <button
+              type="button"
+              onClick={onPrint}
+              className="px-5 py-2.5 border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-800 text-xs font-bold rounded-xl transition-all cursor-pointer shadow-3xs flex items-center gap-2"
+            >
+              <span>🖨️ Cetak HTML / PDF</span>
+            </button>
+          )}
+
+          {userRole === 'superadmin' && onViewJson && (
+            <button
+              type="button"
+              onClick={onViewJson}
+              className="px-4 py-2.5 border border-purple-200 bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-bold rounded-xl transition-all cursor-pointer shadow-3xs"
+            >
+              {'< >'} View JSON
+            </button>
+          )}
 
           {onEditScenario && (
             <button
@@ -84,7 +107,7 @@ export function FooterSection({
             <button
               type="button"
               onClick={onStartRoleplay}
-              className="px-6 py-2.5 bg-indigo-650 hover:bg-indigo-700 text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center gap-1.5 shadow-lg shadow-indigo-500/10 font-bold hover:-translate-y-0.5"
+              className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center gap-1.5 shadow-lg shadow-indigo-500/10 font-bold hover:-translate-y-0.5"
             >
               {labels.roleplayIcon}
               <span>{labels.startRoleplayText}</span>
@@ -101,11 +124,29 @@ export function FooterSection({
           >
             {labels.cancelText}
           </button>
+          {userRole && userRole !== 'agent' && onPrint && (
+            <button
+              type="button"
+              onClick={onPrint}
+              className="px-4 py-2.5 border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-800 text-xs font-bold rounded-xl transition-all cursor-pointer shadow-xxs mr-auto flex items-center gap-2"
+            >
+              <span>🖨️ Pratinjau Cetak</span>
+            </button>
+          )}
+          {userRole === 'superadmin' && onViewJson && (
+            <button
+              type="button"
+              onClick={onViewJson}
+              className={`px-4 py-2.5 border border-purple-200 bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-bold rounded-xl transition-all cursor-pointer shadow-xxs ${!onPrint ? 'mr-auto' : ''}`}
+            >
+              {'< >'} View JSON
+            </button>
+          )}
           <button
             type="submit"
             onClick={handleSubmit}
             disabled={submitting}
-            className="px-5.5 py-2.5 bg-indigo-650 hover:bg-indigo-700 text-white disabled:opacity-50 text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center gap-2 shadow-lg shadow-indigo-500/10 font-bold"
+            className="px-5.5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50 text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center gap-2 shadow-lg shadow-indigo-500/10 font-bold"
           >
             {submitting ? (
               <>

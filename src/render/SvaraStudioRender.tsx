@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { 
   Mic, StopCircle, Play, Pause, Save, CheckCircle2, ChevronRight,
-  Award, Clock, Check, Volume2, X, AlignLeft, Info, Settings, Star, Sparkles
+  Award, Clock, Check, Volume2, X, AlignLeft, Info, Settings, Star, Sparkles, MessageSquare
 } from 'lucide-react';
 import { BusinessScenario, UserProfile } from '../types/index';
 import { renderHighlightedText } from '../utils';
@@ -107,7 +107,7 @@ export function SvaraStudioRender({
 
                 <div className="space-y-3.5">
                   <div className="space-y-1.5">
-                    <label className="block text-[10px] font-black text-slate-650 uppercase tracking-widest">Skenario Terpilih</label>
+                    <label className="block text-[10px] font-black text-slate-600 uppercase tracking-widest">Skenario Terpilih</label>
                     <select
                       className="w-full px-3 py-2 border border-slate-250 rounded-xl bg-white text-slate-800 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
                       value={activeScenario?.scenarioId || ''}
@@ -233,7 +233,7 @@ export function SvaraStudioRender({
 
                 {isTrainerRole && selectedAgent && (
                   <div className="p-3 bg-indigo-50/30 border border-indigo-100 rounded-xl text-xs space-y-1 shadow-xxs">
-                    <span className="text-[10px] text-indigo-650 uppercase tracking-wider font-extrabold block">Mitra Agen Berlatih:</span>
+                    <span className="text-[10px] text-indigo-600 uppercase tracking-wider font-extrabold block">Mitra Agen Berlatih:</span>
                     <p className="font-bold text-slate-800">{selectedAgent.userName}</p>
                     <span className="text-[9px] text-slate-400 font-mono block select-all">{selectedAgent.email}</span>
                   </div>
@@ -328,7 +328,6 @@ export function SvaraStudioRender({
                         <div className="bg-amber-50/70 border border-amber-250/50 rounded-xl p-3.5 text-xs text-amber-800 font-semibold mb-3 leading-relaxed text-left flex items-start gap-2 shadow-xxs">
                           <Sparkles className="h-3.5 w-3.5 text-amber-600 shrink-0 mt-0.5 animate-pulse" />
                           <div className="flex-1">
-                            <span className="text-[9px] font-black text-amber-900 uppercase tracking-wider block mb-0.5">Strategi Komunikasi / Preface:</span>
                             "{turn.preface}"
                           </div>
                         </div>
@@ -389,10 +388,9 @@ export function SvaraStudioRender({
                       )}
 
                       {turn.postscript && (
-                        <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-xs text-slate-550 font-semibold mt-3 leading-relaxed text-left flex items-start gap-2 shadow-xxs">
-                          <Info className="h-3.5 w-3.5 text-slate-400 shrink-0 mt-0.5" />
+                        <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-xs text-slate-600 font-semibold mt-3 leading-relaxed text-left flex items-start gap-2 shadow-xxs">
+                          <MessageSquare className="h-3.5 w-3.5 text-slate-400 shrink-0 mt-0.5" />
                           <div className="flex-1">
-                            <span className="text-[9px] font-black text-slate-600 uppercase tracking-wider block mb-0.5">Insight Lanjutan / Postscript:</span>
                             "{turn.postscript}"
                           </div>
                         </div>

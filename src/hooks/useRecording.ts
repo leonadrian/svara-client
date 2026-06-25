@@ -5,226 +5,32 @@ import {
   getLocalRecordings, saveLocalRecording, 
   getLocalRecordingAudio, deleteLocalRecording, updateLocalRecording 
 } from '../localDb';
-import { showToast } from '../utils';
+import { showToast, getExtensionFromMime } from '../utils';
 import { useAudioRecorder } from '../utils/audioRecorder';
 
-// --- 1. Recording Session Viewer Hook ---
-interface UseRecordingSessionViewerOptions {
+// --- 1. Recording Session Mutations Hook ---
+interface UseRecordingMutationsOptions {
   userProfile: UserProfile;
   scenarios: BusinessScenario[];
-  cloudRecordings: RecordingSession[];
   userNamesMap?: Record<string, string>;
-  onRefreshCloud?: () => void;
+  onRefresh?: () => void;
 }
 
-const getExtensionFromMime = (mimeType?: string): string => {
-  if (!mimeType) return 'webm';
-  if (mimeType.includes('mp3') || mimeType.includes('mpeg')) return 'mp3';
-  if (mimeType.includes('webm')) return 'webm';
-  if (mimeType.includes('ogg')) return 'ogg';
-  if (mimeType.includes('wav')) return 'wav';
-  return 'webm';
-};
-
-export function useRecordingSessionViewer({
+export function useRecordingMutations({
   userProfile,
   scenarios,
-  cloudRecordings,
   userNamesMap = {},
-  onRefreshCloud
-}: UseRecordingSessionViewerOptions) {
-  const { userService, recordingService, storageService } = useServices();
+  onRefresh
+}: UseRecordingMutationsOptions) {
+  const { recordingService, storageService } = useServices();
   const isAgent = userProfile.role === 'agent';
-
-  const [localRecordings, setLocalRecordings] = useState<any[]>([]);
-  const [loadingLocal, setLoadingLocal] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterCategory, setFilterCategory] = useState('all');
-
-  // Add External Recording Form State
-  const [showAddExternal, setShowAddExternal] = useState(false);
-  const [extTitle, setExtTitle] = useState('');
-  const [extScenarioId, setExtScenarioId] = useState('');
-  const [extAgentId, setExtAgentId] = useState('');
-  const [extDuration, setExtDuration] = useState<number>(30);
-  const [extFile, setExtFile] = useState<File | null>(null);
-  const [addingExternal, setAddingExternal] = useState(false);
-
-  // Editing/Linking Recording state
-  const [linkingRecId, setLinkingRecId] = useState<string | null>(null);
-  const [linkingAgentId, setLinkingAgentId] = useState('');
-  const [linkingScenarioId, setLinkingScenarioId] = useState('');
-  const [updatingLink, setUpdatingLink] = useState(false);
-
-  // Playback Player State
-  const [activePlayId, setActivePlayId] = useState<string | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [audioPlayer, setAudioPlayer] = useState<HTMLAudioElement | null>(null);
-  const [loadingAudioBlob, setLoadingAudioBlob] = useState(false);
-
-  // Uploading state
-  const [uploadingId, setUploadingId] = useState<string | null>(null);
-
-  // List of all registered agents (for selection)
-  const [agentsList, setAgentsList] = useState<UserProfile[]>([]);
-
   const assignedTrainerId = (userProfile as any).assignedTrainer;
 
-  useEffect(() => {
-    loadLocalData();
-    fetchAgents();
-  }, []);
+  const [isUploading, setIsUploading] = useState(false);
 
-  // Clean audio player on unmount
-  useEffect(() => {
-    return () => {
-      if (audioPlayer) {
-        audioPlayer.pause();
-      }
-    };
-  }, [audioPlayer]);
-
-  const loadLocalData = async () => {
-    setLoadingLocal(true);
-    try {
-      const list = await getLocalRecordings();
-      setLocalRecordings(list);
-    } catch (err) {
-      console.warn("Failed to read local indexedDB recordings:", err);
-    } finally {
-      setLoadingLocal(false);
-    }
-  };
-
-  const fetchAgents = async () => {
-    try {
-      const usersProfileList = await userService.getUsers();
-      const agents = usersProfileList.filter(u => u.role === 'agent');
-      setAgentsList(agents);
-    } catch (err) {
-      console.warn("Could not load agents list inside Hook: ", err);
-    }
-  };
-
-  const getMergedRecordings = () => {
-    const merged: {
-      id: string;
-      title: string;
-      scenarioId: string;
-      scenarioTitle: string;
-      scenarioCategory: string;
-      agentId: string | null;
-      agentName: string;
-      trainerId?: string;
-      trainerName?: string;
-      duration: number;
-      createdAt: string;
-      cloudAudioUrl?: string;
-      hasLocal: boolean;
-      hasCloud: boolean;
-      isUploaded: boolean;
-      notes?: string;
-    }[] = [];
-
-    // Add Cloud recordings
-    cloudRecordings.forEach((c) => {
-      const agentId = c.agentSnapshot?.agentId || (c as any).agentId;
-      if (isAgent && agentId !== userProfile.userId) {
-        return;
-      }
-      const scenarioId = c.scenarioSnapshot?.scenarioId || (c as any).businessScenarioId;
-      const trainerId = c.agentSnapshot?.assignedTrainerId || (c as any).assignedTrainer;
-
-      merged.push({
-        id: c.id,
-        title: `Latihan - Skenario Svara (Cloud)`,
-        scenarioId: scenarioId,
-        scenarioTitle: c.scenarioSnapshot?.scenarioTitle || scenarios.find(s => s.scenarioId === scenarioId)?.title || 'Guided Practice',
-        scenarioCategory: scenarios.find(s => s.scenarioId === scenarioId)?.category || 'sales',
-        agentId: agentId,
-        agentName: c.agentSnapshot?.agentName || userNamesMap?.[agentId] || agentId,
-        trainerId: trainerId,
-        trainerName: c.agentSnapshot?.assignedTrainerName || userNamesMap?.[trainerId] || trainerId,
-        duration: c.audioMetaData?.durationSeconds || 0,
-        createdAt: c.startedAt,
-        cloudAudioUrl: c.audioUrl || undefined,
-        hasLocal: false,
-        hasCloud: true,
-        isUploaded: true,
-        notes: (c as any).notes
-      });
-    });
-
-    // Merge in Local recordings
-    localRecordings.forEach((l) => {
-      const agentId = l.agentSnapshot?.agentId || (l as any).agentId;
-      if (isAgent && agentId && agentId !== userProfile.userId) {
-        return;
-      }
-      const existing = merged.find(m => m.id === l.id);
-      if (existing) {
-        existing.hasLocal = true;
-        if (l.audioUrl) {
-          existing.cloudAudioUrl = l.audioUrl;
-          existing.hasCloud = true;
-        }
-      } else {
-        const scenarioId = l.scenarioSnapshot?.scenarioId || (l as any).businessScenarioId || 'free_practice_sales';
-        const trainerId = l.agentSnapshot?.assignedTrainerId || (l as any).assignedTrainer;
-
-        merged.push({
-          id: l.id,
-          title: l.title || `Latihan - Svara (Lokal)`,
-          scenarioId: scenarioId,
-          scenarioTitle: l.scenarioSnapshot?.scenarioTitle || scenarios.find(s => s.scenarioId === scenarioId)?.title || 'Guided Practice',
-          scenarioCategory: scenarios.find(s => s.scenarioId === scenarioId)?.category || 'sales',
-          agentId: agentId,
-          agentName: l.agentSnapshot?.agentName || userNamesMap?.[agentId] || agentId || 'Belum Ditugaskan',
-          trainerId: trainerId,
-          trainerName: l.agentSnapshot?.assignedTrainerName || userNamesMap?.[trainerId] || trainerId || 'Self Review',
-          duration: l.audioMetaData?.durationSeconds || l.duration || 12,
-          createdAt: l.startedAt || l.endedAt || l.createdAt,
-          cloudAudioUrl: l.audioUrl || undefined,
-          hasLocal: true,
-          hasCloud: !!l.audioUrl,
-          isUploaded: !!l.audioUrl,
-          notes: l.notes
-        });
-      }
-    });
-
-    // Filter and sort
-    return merged.filter((item) => {
-      const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            item.scenarioTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            item.agentName.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory = filterCategory === 'all' || item.scenarioCategory === filterCategory;
-      return matchesSearch && matchesCategory;
-    }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  };
-
-  const handlePlayRecording = async (recId: string, cloudUrl?: string) => {
-    if (activePlayId === recId && isPlaying) {
-      if (audioPlayer) {
-        audioPlayer.pause();
-        setIsPlaying(false);
-      }
-      return;
-    }
-
-    if (activePlayId === recId && audioPlayer) {
-      audioPlayer.play();
-      setIsPlaying(true);
-      return;
-    }
-
-    if (audioPlayer) {
-      audioPlayer.pause();
-    }
-
-    setLoadingAudioBlob(true);
+  // Playback resolver
+  const resolveAudioUrl = async (recId: string, cloudUrl?: string): Promise<string> => {
     let playbackSrc = '';
-
     try {
       const localAudioBlob = await getLocalRecordingAudio(recId);
       if (localAudioBlob) {
@@ -240,36 +46,16 @@ export function useRecordingSessionViewer({
         playbackSrc = cloudUrl;
         console.log(`Streaming audio from Firebase Cloud Storage for recording: ${recId}`);
       } else {
-        showToast("Audio file tidak ditemukan baik secara lokal maupun cloud.", "error");
-        setLoadingAudioBlob(false);
-        return;
+        throw new Error("Audio file tidak ditemukan baik secara lokal maupun cloud.");
       }
     }
-
-    const audio = new Audio(playbackSrc);
-    audio.oncanplaythrough = () => {
-      setLoadingAudioBlob(false);
-      audio.play();
-      setIsPlaying(true);
-    };
-    audio.onended = () => {
-      setIsPlaying(false);
-    };
-    audio.onerror = () => {
-      showToast("Gagal memutar audio. Pastikan tipe file audio disupport.", "error");
-      setLoadingAudioBlob(false);
-    };
-
-    setAudioPlayer(audio);
-    setActivePlayId(recId);
+    return playbackSrc;
   };
 
-  const handleUploadToCloud = async (recId: string) => {
-    setUploadingId(recId);
+  const handleUploadToCloud = async (recId: string, localMeta: any) => {
+    setIsUploading(true);
     try {
       const localAudioBlob = await getLocalRecordingAudio(recId);
-      const localMeta = localRecordings.find(r => r.id === recId);
-
       if (!localAudioBlob || !localMeta) {
         throw new Error("Data audio lokal atau metadata tidak ditemukan di database.");
       }
@@ -320,20 +106,23 @@ export function useRecordingSessionViewer({
       });
 
       showToast("Succeeded uploading audio to Svara Cloud!", "success");
-      loadLocalData();
-      if (onRefreshCloud) {
-        onRefreshCloud();
-      }
+      if (onRefresh) onRefresh();
     } catch (err: any) {
       console.error("Gagal mengunggah rekaman manual:", err);
       showToast(`Gagal mengunggah: ${err.message}`, "error");
     } finally {
-      setUploadingId(null);
+      setIsUploading(false);
     }
   };
 
-  const handleAddExternalFile = async (e: FormEvent) => {
-    e.preventDefault();
+  const handleAddExternalFile = async (
+    extTitle: string, 
+    extFile: File, 
+    extScenarioId: string, 
+    extAgentId: string, 
+    extDuration: number, 
+    agentsList: UserProfile[]
+  ) => {
     if (!extTitle.trim()) {
       showToast("Judul rekaman tidak boleh kosong.", "error");
       return;
@@ -342,8 +131,6 @@ export function useRecordingSessionViewer({
       showToast("Anda harus melampirkan file audio (.mp3, .wav, atau sejenisnya).", "error");
       return;
     }
-
-    setAddingExternal(true);
 
     const recordingId = `record_external_${Date.now()}`;
     const selectedScenario = scenarios.find(s => s.scenarioId === extScenarioId);
@@ -373,26 +160,19 @@ export function useRecordingSessionViewer({
     try {
       await saveLocalRecording(metadata, extFile);
       showToast(`Rekaman eksternal "${extTitle}" berhasil disimpan ke buffer lokal!`, "success");
-      setShowAddExternal(false);
-      
-      setExtTitle('');
-      setExtScenarioId('');
-      setExtAgentId('');
-      setExtFile(null);
-
-      loadLocalData();
+      if (onRefresh) onRefresh();
     } catch (err: any) {
       showToast(`Gagal menyimpan rekaman luar: ${err.message}`, "error");
-    } finally {
-      setAddingExternal(false);
     }
   };
 
-  const handleLinkRecordingCredentials = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!linkingRecId) return;
-
-    setUpdatingLink(true);
+  const handleLinkRecordingCredentials = async (
+    linkingRecId: string, 
+    linkingAgentId: string, 
+    linkingScenarioId: string, 
+    agentsList: UserProfile[],
+    isUploaded: boolean
+  ) => {
     const selectedAgentObj = agentsList.find(a => a.userId === linkingAgentId);
     const selectedScenObj = scenarios.find(s => s.scenarioId === linkingScenarioId);
 
@@ -410,25 +190,17 @@ export function useRecordingSessionViewer({
     };
 
     try {
-      const updatedLocal = await updateLocalRecording(linkingRecId, updates);
-
-      if (updatedLocal.isUploaded) {
+      await updateLocalRecording(linkingRecId, updates);
+      if (isUploaded) {
         await recordingService.updateRecording(linkingRecId, {
           agentSnapshot: updates.agentSnapshot,
           scenarioSnapshot: updates.scenarioSnapshot
         } as any);
       }
-
       showToast("Metadata rekaman berhasil dikaitkan!", "success");
-      setLinkingRecId(null);
-      loadLocalData();
-      if (onRefreshCloud) {
-        onRefreshCloud();
-      }
+      if (onRefresh) onRefresh();
     } catch (err: any) {
       showToast(`Gagal mengaitkan data: ${err.message}`, "error");
-    } finally {
-      setUpdatingLink(false);
     }
   };
 
@@ -436,54 +208,23 @@ export function useRecordingSessionViewer({
     try {
       await deleteLocalRecording(id);
       showToast(`Berkas rekaman lokal "${name}" telah dihapus.`, "success");
-      loadLocalData();
+      if (onRefresh) onRefresh();
     } catch (err: any) {
       showToast(`Gagal menghapus: ${err.message}`, "error");
     }
   };
 
-  const records = getMergedRecordings();
-
   return {
-    localRecordings,
-    loadingLocal,
-    searchQuery,
-    setSearchQuery,
-    filterCategory,
-    setFilterCategory,
-    showAddExternal,
-    setShowAddExternal,
-    extTitle,
-    setExtTitle,
-    extScenarioId,
-    setExtScenarioId,
-    extAgentId,
-    setExtAgentId,
-    extDuration,
-    setExtDuration,
-    extFile,
-    setExtFile,
-    addingExternal,
-    linkingRecId,
-    setLinkingRecId,
-    linkingAgentId,
-    setLinkingAgentId,
-    linkingScenarioId,
-    setLinkingScenarioId,
-    updatingLink,
-    activePlayId,
-    isPlaying,
-    loadingAudioBlob,
-    uploadingId,
-    agentsList,
-    records,
-    handlePlayRecording,
+    isUploading,
+    resolveAudioUrl,
     handleUploadToCloud,
     handleAddExternalFile,
     handleLinkRecordingCredentials,
     handleDeleteLocalRecord
   };
 }
+
+
 
 
 // --- 2. Recording Session Detail Hook ---
@@ -797,3 +538,4 @@ export function useSvaraStudioSimulation({
     saveRoleplayRecording
   };
 }
+

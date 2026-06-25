@@ -5,11 +5,7 @@ import { UserProfile, BusinessScenario, RecordingSession } from './types/index';
 import LandingPage from './components/LandingPage';
 import ScenarioBuilder from './components/ScenarioBuilder';
 import SvaraStudio from './components/SvaraStudio';
-import ManagerDashboard from './components/ManagerDashboard';
-import TrainerDashboard from './components/TrainerDashboard';
-import AgentDashboard from './components/AgentDashboard';
-import SuperadminDashboard from './components/SuperadminDashboard';
-import RecordingSessionViewer from './components/RecordingSessionViewer';
+import Dashboard from './components/Dashboard';
 import RecordingSessionDetail from './components/RecordingSessionDetail';
 import ToastContainer from './components/ToastContainer';
 import { ServiceProvider, useServices } from './services/ServiceContext';
@@ -40,7 +36,6 @@ function AppContent() {
 
   // Modal displays controls
   const [isScenarioBuilderOpen, setIsScenarioBuilderOpen] = useState(false);
-  const [isRecordingsLibraryOpen, setIsRecordingsLibraryOpen] = useState(false);
   const [activeSimulatorScenario, setActiveSimulatorScenario] = useState<BusinessScenario | null>(null);
   const [activeSimulatorAgentId, setActiveSimulatorAgentId] = useState<string | null>(null);
   const [activeDetailScenario, setActiveDetailScenario] = useState<BusinessScenario | null>(null);
@@ -116,14 +111,21 @@ function AppContent() {
 
     const unsubscribe = userService.subscribeUserProfile(currentUserProfile.userId, (profileData) => {
       if (profileData) {
-        // Only update if critical fields changed
-        if (
-          profileData.role !== currentUserProfile.role ||
-          (profileData.role === 'agent' && (profileData as any).assignedTrainer !== (currentUserProfile as any).assignedTrainer) ||
-          profileData.userName !== currentUserProfile.userName
-        ) {
-          setCurrentUserProfile(profileData);
-        }
+        setCurrentUserProfile(prev => {
+          if (!prev) return profileData;
+          
+          const isSpoofing = profileData.role === 'superadmin' && prev.role !== 'superadmin';
+          
+          // Only update if critical fields changed, but preserve spoofed role
+          if (
+            (!isSpoofing && profileData.role !== prev.role) ||
+            (profileData.role === 'agent' && (profileData as any).assignedTrainer !== (prev as any).assignedTrainer) ||
+            profileData.userName !== prev.userName
+          ) {
+            return isSpoofing ? { ...profileData, role: prev.role, _originalRole: 'superadmin' } as any : profileData;
+          }
+          return prev;
+        });
       }
     }, (err) => {
       console.warn("Real-time profile sync met an issue:", err);
@@ -144,11 +146,15 @@ function AppContent() {
   // Switch role function for testing/evaluation frictionless ease
   const forceSwitchRole = (targetRole: 'manager' | 'trainer' | 'agent' | 'superadmin') => {
     if (!currentUserProfile) return;
-    const switched: UserProfile = {
+    const isCurrentlySpoofing = (currentUserProfile as any)._originalRole !== undefined;
+    const originalRole = isCurrentlySpoofing ? (currentUserProfile as any)._originalRole : currentUserProfile.role;
+    
+    const switched = {
       ...currentUserProfile,
-      role: targetRole
-    } as any;
-    setCurrentUserProfile(switched);
+      role: targetRole,
+      _originalRole: originalRole
+    };
+    setCurrentUserProfile(switched as UserProfile);
   };
 
   if (currentUserProfile && currentUserProfile.role === 'onboarding') {
@@ -262,18 +268,6 @@ function AppContent() {
           {currentUserProfile && (
             <div className="flex items-center gap-4">
               
-              {/* Library & Buffer Modal Trigger */}
-              <button
-                type="button"
-                onClick={() => setIsRecordingsLibraryOpen(true)}
-                className="px-3.5 py-2 border border-teal-250 bg-teal-50 hover:bg-teal-100 text-teal-800 rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-xxs cursor-pointer flex items-center gap-1.5"
-                title="Buka Pustaka Rekaman & Offline Buffer"
-                id="header-recordings-library-btn"
-              >
-                <Layers className="h-4 w-4 text-teal-600 shrink-0" />
-                <span>Pustaka Rekaman & Buffer</span>
-              </button>
-
               {/* Role Indicator Profile Tag */}
               <div className="hidden sm:flex items-center gap-2.5 bg-slate-50 border border-slate-200/60 p-1.5 px-3.5 rounded-2xl">
                 <div className="text-right">
@@ -294,7 +288,7 @@ function AppContent() {
               </div>
 
               {/* Official Superadmin / Dual Role Perspective Toggler */}
-              {currentUserProfile.role === 'superadmin' && (
+              {(currentUserProfile.role === 'superadmin' || (currentUserProfile as any)._originalRole === 'superadmin') && (
                 <div className="flex items-center gap-1.5 bg-indigo-50 border border-indigo-200/60 p-1 rounded-xl shadow-xxs">
                   <span className="text-[9px] font-black text-indigo-700 uppercase px-2 hidden lg:block tracking-wider">Peran:</span>
                   <select
@@ -340,50 +334,16 @@ function AppContent() {
               </div>
             )}
 
-            {/* Role-Based Dashboard Routing */}
-            {currentUserProfile.role === 'superadmin' && (
-              <SuperadminDashboard 
-                userProfile={currentUserProfile}
-              />
-            )}
-
-            {currentUserProfile.role === 'manager' && (
-              <ManagerDashboard 
-                userProfile={currentUserProfile}
-                scenarios={scenarios}
-                recordings={recordings}
-                onTriggerScenarioBuilder={() => setIsScenarioBuilderOpen(true)}
-                onTriggerSimulator={(sc) => setActiveSimulatorScenario(sc)}
-                onTriggerScenarioDetail={(sc) => setActiveDetailScenario(sc)}
-                userNamesMap={userNamesMap}
-              />
-            )}
-
-            {currentUserProfile.role === 'trainer' && (
-              <TrainerDashboard 
-                userProfile={currentUserProfile}
-                scenarios={scenarios}
-                recordings={recordings}
-                onTriggerScenarioBuilder={() => setIsScenarioBuilderOpen(true)}
-                onTriggerSimulator={(sc, preselectedAgentId) => {
-                  setActiveSimulatorScenario(sc);
-                  setActiveSimulatorAgentId(preselectedAgentId || null);
-                }}
-                onTriggerScenarioDetail={(sc) => setActiveDetailScenario(sc)}
-                userNamesMap={userNamesMap}
-              />
-            )}
-
-            {currentUserProfile.role === 'agent' && (
-              <AgentDashboard 
-                userProfile={currentUserProfile}
-                scenarios={scenarios}
-                recordings={recordings}
-                onTriggerSimulator={(sc) => setActiveSimulatorScenario(sc)}
-                onTriggerScenarioDetail={(sc) => setActiveDetailScenario(sc)}
-                userNamesMap={userNamesMap}
-              />
-            )}
+            {/* Unified Dashboard */}
+            <Dashboard 
+              userProfile={currentUserProfile}
+              onTriggerScenarioBuilder={() => setIsScenarioBuilderOpen(true)}
+              onTriggerSimulator={(sc, preselectedAgentId) => {
+                setActiveSimulatorScenario(sc);
+                setActiveSimulatorAgentId(preselectedAgentId || null);
+              }}
+              onTriggerScenarioDetail={(sc) => setActiveDetailScenario(sc)}
+            />
 
           </div>
         )}
@@ -477,23 +437,6 @@ function AppContent() {
               : undefined
           }
           onSaveSuccess={() => {}}
-        />
-      )}
-
-      {/* Recording Session Viewer List & Buffer Modal */}
-      {isRecordingsLibraryOpen && currentUserProfile && (
-        <RecordingSessionViewer
-          userProfile={currentUserProfile}
-          scenarios={scenarios}
-          cloudRecordings={recordings}
-          userNamesMap={userNamesMap}
-          onClose={() => setIsRecordingsLibraryOpen(false)}
-          onRefreshCloud={() => {
-            console.log("Log rekaman disinkronkan otomatis via live snapshot!");
-          }}
-          onSelectRecording={(rec) => {
-            setActiveDetailRecording(rec);
-          }}
         />
       )}
 

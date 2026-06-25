@@ -46,3 +46,14 @@ export function renderHighlightedText(text: string) {
   );
 }
 
+export function getExtensionFromMime(mimeType: string): string {
+  const mapping: Record<string, string> = {
+    'audio/webm': 'webm',
+    'audio/webm;codecs=opus': 'webm',
+    'audio/mp4': 'mp4',
+    'audio/mpeg': 'mp3',
+    'audio/wav': 'wav',
+    'audio/ogg': 'ogg'
+  };
+  return mapping[mimeType] || 'webm';
+}

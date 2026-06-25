@@ -86,7 +86,7 @@ export function CoreInfoSection({
       <div>
         <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">{labels.description.label}</label>
         {isReadOnly ? (
-          <div className="text-xs font-semibold text-slate-650 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl leading-relaxed whitespace-pre-wrap">
+          <div className="text-xs font-semibold text-slate-600 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl leading-relaxed whitespace-pre-wrap">
             {description || labels.description.emptyText}
           </div>
         ) : (
@@ -156,7 +156,7 @@ export function TrainerAccessSection({
                 <input
                   type="checkbox"
                   checked={isChecked}
-                  className="rounded border-gray-300 text-indigo-650 focus:ring-indigo-500 h-4 w-4"
+                  className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4"
                   onChange={() => {
                     if (isChecked) {
                       setAllowedTrainers(allowedTrainers.filter(id => id !== tr.userId));
@@ -213,6 +213,13 @@ const CHECKLIST_COLORS: Record<ChecklistLabels['colorScheme'], {
     inputRing: 'focus:ring-1 focus:ring-rose-300',
     addBtnBorder: 'border-rose-200', addBtnBg: 'bg-rose-100/50 hover:bg-rose-100', addBtnText: 'text-rose-800',
   },
+  amber: {
+    card: 'bg-amber-50/40 border-amber-100',
+    itemBorder: 'border-amber-100', itemText: 'text-amber-950',
+    deleteBtn: 'text-amber-400 hover:text-amber-600',
+    inputRing: 'focus:ring-1 focus:ring-amber-300',
+    addBtnBorder: 'border-amber-200', addBtnBg: 'bg-amber-100/50 hover:bg-amber-100', addBtnText: 'text-amber-800',
+  },
   teal: {
     card: 'bg-teal-50/30 border-teal-100',
     itemBorder: 'border-teal-100', itemText: 'text-teal-950',
@@ -228,9 +235,11 @@ function ChecklistSection({
   const colors = CHECKLIST_COLORS[labels.colorScheme];
   const titleColor = labels.colorScheme === 'red' ? 'text-red-800'
     : labels.colorScheme === 'rose' ? 'text-rose-800'
+    : labels.colorScheme === 'amber' ? 'text-amber-800'
     : 'text-teal-800';
   const descColor = labels.colorScheme === 'red' ? 'text-red-600'
     : labels.colorScheme === 'rose' ? 'text-rose-600'
+    : labels.colorScheme === 'amber' ? 'text-amber-600'
     : 'text-teal-600';
 
   return (

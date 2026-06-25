@@ -63,7 +63,7 @@ export default function RecordingSessionDetailRender({
           <span className="text-[10px] bg-indigo-50 border border-indigo-200/40 text-indigo-700 font-extrabold px-2 py-0.5 rounded-md uppercase tracking-wider">
             Detail Latihan Terperinci
           </span>
-          <h3 className="text-sm font-black text-slate-850 font-display mt-1.5 leading-snug line-clamp-1" title={recording.title}>
+          <h3 className="text-sm font-black text-slate-600 font-display mt-1.5 leading-snug line-clamp-1" title={recording.title}>
             {recording.title}
           </h3>
         </div>
@@ -79,7 +79,7 @@ export default function RecordingSessionDetailRender({
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
         
         {/* Core details mapping cards */}
-        <div className="grid grid-cols-2 gap-4 bg-slate-50/50 p-4 border border-slate-150 rounded-2xl text-xs text-slate-650 font-semibold shadow-xxs">
+        <div className="grid grid-cols-2 gap-4 bg-slate-50/50 p-4 border border-slate-150 rounded-2xl text-xs text-slate-600 font-semibold shadow-xxs">
           <div>
             <span className="text-slate-400 block text-[9px] uppercase tracking-wider font-extrabold">Peserta Sesi</span>
             <span className="font-bold text-slate-800 flex items-center gap-1 mt-0.5">

@@ -355,16 +355,76 @@ export function useScenarioBuilder({
     e.preventDefault();
     setError(null);
 
+    let currentSentences = [...sentences];
+
+    // Auto-save pending sentence edits if user clicks global save without clicking checkmark
+    if (editingIndex !== null && editText.trim()) {
+      const target = currentSentences[editingIndex];
+      if (editSpeaker === 'agent') {
+        currentSentences[editingIndex] = {
+          ...target,
+          speaker: 'agent',
+          text: editText.trim(),
+          preface: editPreface.trim() ? editPreface.trim() : undefined,
+          postscript: editPostscript.trim() ? editPostscript.trim() : undefined,
+          intentIds: editIntent.trim() ? [editIntent.trim()] : [],
+          scenarioPointIds: [...editSelectedPointIds]
+        } as AgentSentence;
+      } else {
+        currentSentences[editingIndex] = {
+          ...target,
+          speaker: 'customer',
+          text: editText.trim(),
+          preface: editPreface.trim() ? editPreface.trim() : undefined,
+          postscript: editPostscript.trim() ? editPostscript.trim() : undefined,
+          responseType: editResponseType
+        } as CustomerSentence;
+      }
+      setSentences(currentSentences);
+      setEditingIndex(null);
+    }
+
+    // Auto-save pending NEW sentence if user clicks global save without clicking "Tambah Kalimat"
+    if (newText.trim()) {
+      const sentenceId = `sen_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`;
+      let newSentence: ScenarioSentence;
+      if (newSpeaker === 'agent') {
+        newSentence = {
+          sentenceId,
+          scenarioId: editingScenario?.scenarioId || '',
+          sequence: currentSentences.length + 1,
+          speaker: 'agent',
+          text: newText.trim(),
+          intentIds: newIntent.trim() ? [newIntent.trim()] : [],
+          scenarioPointIds: [...newSelectedPointIds],
+          preface: newPreface.trim() ? newPreface.trim() : undefined,
+          postscript: newPostscript.trim() ? newPostscript.trim() : undefined
+        } as AgentSentence;
+      } else {
+        newSentence = {
+          sentenceId,
+          scenarioId: editingScenario?.scenarioId || '',
+          sequence: currentSentences.length + 1,
+          speaker: 'customer',
+          text: newText.trim(),
+          responseType: newResponseType,
+          preface: newPreface.trim() ? newPreface.trim() : undefined,
+          postscript: newPostscript.trim() ? newPostscript.trim() : undefined
+        } as CustomerSentence;
+      }
+      currentSentences = [...currentSentences, newSentence];
+      setSentences(currentSentences);
+      setNewText('');
+      setNewPreface('');
+      setNewPostscript('');
+    }
+
     if (!title.trim() || !description.trim()) {
       setError("Judul dan Deskripsi skenarios wajib diisi");
       return;
     }
-    if (sentences.length === 0) {
+    if (currentSentences.length === 0) {
       setError("Masukkan setidaknya 1 kalimat percakapan dalam skrip skenario");
-      return;
-    }
-    if (mandatoryPoints.length === 0) {
-      setError("Masukkan setidaknya 1 Poin Kepatuhan Kritis (Mandatory Points)");
       return;
     }
 
@@ -393,7 +453,7 @@ export function useScenarioBuilder({
       }))
     ];
 
-    const finalSentences: ScenarioSentence[] = sentences.map((sen, index) => {
+    const finalSentences: ScenarioSentence[] = currentSentences.map((sen, index) => {
       if (sen.speaker === 'agent') {
         return {
           ...sen,

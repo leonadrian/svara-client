@@ -3,7 +3,7 @@ import { IServiceRegistry } from './interfaces';
 import { UserApiService } from './rest/UserApiService';
 import { ScenarioApiService } from './rest/ScenarioApiService';
 import { RecordingApiService } from './rest/RecordingApiService';
-import { FirebaseStorageAdapter } from './rest/FirebaseStorageAdapter';
+import { FirebaseStorageAdapter } from './firebase/FirebaseStorageAdapter';
 
 const ServiceContext = createContext<IServiceRegistry | null>(null);
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Plus, Trash, Check, MessageSquare, ArrowUp, ArrowDown, Edit2
 } from 'lucide-react';
@@ -72,39 +72,117 @@ export function ScriptBuilderSection({
   editPreface, setEditPreface, editPostscript, setEditPostscript,
   addSentence, removeSentence, moveSentence, startEditingSentence, saveEditSentence,
 }: ScriptBuilderSectionProps) {
+  const [showNewPreface, setShowNewPreface] = useState(false);
+  const [showNewPostscript, setShowNewPostscript] = useState(false);
+  const [showEditPreface, setShowEditPreface] = useState(false);
+  const [showEditPostscript, setShowEditPostscript] = useState(false);
 
-  // ---- Sub-render: Point selection checkboxes (shared by edit & add modes) ----
+// ---- Custom Point Multi-Select Dropdown Component ----
+function PointMultiSelect({
+  selectedIds,
+  onToggle,
+  allAvailablePoints,
+  title,
+}: {
+  selectedIds: string[];
+  onToggle: (id: string) => void;
+  allAvailablePoints: { id: string; name: string; type: string }[];
+  title: string;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  if (allAvailablePoints.length === 0) return null;
+
+  const selectedPoints = allAvailablePoints.filter(p => selectedIds.includes(p.id));
+
+  return (
+    <div className="relative text-left">
+      <div className="flex flex-col gap-2">
+        <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">
+          {title}
+        </label>
+        
+        <div className="flex flex-wrap items-center gap-2">
+          {selectedPoints.map(pt => {
+            const pillColor = pt.type === 'mandatory' ? 'bg-red-50 text-red-700 border-red-200' :
+                              pt.type === 'key_point' ? 'bg-rose-50 text-rose-700 border-rose-200' :
+                              'bg-teal-50 text-teal-700 border-teal-200';
+            return (
+              <span key={pt.id} className={`text-[10px] px-2 py-1 rounded-md border font-bold flex items-center gap-1 ${pillColor}`}>
+                {pt.name}
+                <button 
+                  type="button" 
+                  onClick={() => onToggle(pt.id)}
+                  className="hover:opacity-70 ml-1"
+                >
+                  &times;
+                </button>
+              </span>
+            );
+          })}
+          
+          <button
+            type="button"
+            onClick={() => setIsOpen(!isOpen)}
+            className="text-[10px] font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-2.5 py-1 rounded-md transition-colors flex items-center gap-1 cursor-pointer"
+          >
+            <Plus className="h-3 w-3" /> Pilih Poin Konteks
+          </button>
+        </div>
+      </div>
+
+      {isOpen && (
+        <>
+          <div 
+            className="fixed inset-0 z-10" 
+            onClick={() => setIsOpen(false)}
+          />
+          <div className="absolute z-20 mt-2 w-full sm:w-96 bg-white border border-slate-200 rounded-xl shadow-lg p-3">
+            <div className="flex justify-between items-center mb-2 border-b border-slate-100 pb-2">
+              <span className="text-xs font-bold text-slate-800">Daftar Poin Skenario</span>
+              <button type="button" onClick={() => setIsOpen(false)} className="text-slate-400 hover:text-slate-600">
+                &times;
+              </button>
+            </div>
+            <div className="max-h-[200px] overflow-y-auto space-y-1.5 pr-1">
+              {allAvailablePoints.map((pt) => {
+                const isChecked = selectedIds.includes(pt.id);
+                const colorClass = pt.type === 'mandatory' ? 'border-red-200 focus:ring-red-500 text-red-600' :
+                                   pt.type === 'key_point' ? 'border-rose-200 focus:ring-rose-500 text-rose-600' :
+                                   'border-teal-200 focus:ring-teal-500 text-teal-600';
+                return (
+                  <label key={pt.id} className={`flex items-start gap-2 p-2 rounded-lg border transition-all cursor-pointer text-xs font-semibold ${isChecked ? 'bg-indigo-50/50 border-indigo-200 text-indigo-950' : 'bg-white hover:bg-slate-50 border-gray-100'}`}>
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => onToggle(pt.id)}
+                      className={`rounded h-3.5 w-3.5 mt-0.5 shrink-0 ${colorClass}`}
+                    />
+                    <span className="leading-tight text-[11px]">{pt.name}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+  // ---- Sub-render: Point selection wrapper ----
   const renderPointCheckboxes = (
     selectedIds: string[],
     onToggle: (id: string) => void,
     title: string,
   ) => {
-    if (allAvailablePoints.length === 0) return null;
     return (
-      <div className="bg-indigo-50/40 border border-indigo-100 rounded-xl p-3.5 space-y-2 text-left">
-        <span className="text-[10px] font-bold text-indigo-850 uppercase tracking-wider block">
-          {title}
-        </span>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[140px] overflow-y-auto">
-          {allAvailablePoints.map((pt) => {
-            const isChecked = selectedIds.includes(pt.id);
-            const colorClass = pt.type === 'mandatory' ? 'border-red-200 focus:ring-red-500 text-red-650' :
-                               pt.type === 'key_point' ? 'border-rose-200 focus:ring-rose-500 text-rose-650' :
-                               'border-teal-200 focus:ring-teal-500 text-teal-650';
-            return (
-              <label key={pt.id} className={`flex items-start gap-2 p-2 rounded-lg border transition-all cursor-pointer text-xs font-semibold ${isChecked ? 'bg-white shadow-3xs border-indigo-200 text-indigo-950' : 'opacity-75 border-gray-200'}`}>
-                <input
-                  type="checkbox"
-                  checked={isChecked}
-                  onChange={() => onToggle(pt.id)}
-                  className={`rounded h-3.5 w-3.5 mt-0.5 shrink-0 ${colorClass}`}
-                />
-                <span className="leading-tight text-[11px]">{pt.name}</span>
-              </label>
-            );
-          })}
-        </div>
-      </div>
+      <PointMultiSelect
+        selectedIds={selectedIds}
+        onToggle={onToggle}
+        title={title}
+        allAvailablePoints={allAvailablePoints}
+      />
     );
   };
 
@@ -155,43 +233,84 @@ export function ScriptBuilderSection({
       )}
 
       <div className="space-y-3.5">
-        <div>
-          <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
-            Preface (Panduan Sebelum Kalimat - Opsional)
-          </label>
-          <textarea
-            value={editPreface}
-            onChange={(e) => setEditPreface(e.target.value)}
-            placeholder="Tulis panduan taktis atau strategi komunikasi sebelum kalimat dibaca..."
-            className="w-full text-xs font-medium border border-gray-200 rounded-lg p-2.5 resize-none bg-gray-50 focus:bg-white outline-none font-sans"
-            rows={1.5}
-          />
-        </div>
-
-        <div>
-          <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+        <div className="flex items-center gap-2 mb-1">
+          <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider flex-1">
             Teks Dialog Percakapan Utama
           </label>
+          {!showEditPreface && (
+            <button
+              type="button"
+              onClick={() => setShowEditPreface(true)}
+              className="text-[10px] font-bold text-amber-600 hover:text-amber-700 bg-amber-50 hover:bg-amber-100 px-2 py-0.5 rounded transition-colors flex items-center gap-1 cursor-pointer"
+            >
+              <Plus className="h-3 w-3" /> Preface
+            </button>
+          )}
+          {!showEditPostscript && (
+            <button
+              type="button"
+              onClick={() => setShowEditPostscript(true)}
+              className="text-[10px] font-bold text-emerald-600 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded transition-colors flex items-center gap-1 cursor-pointer"
+            >
+              <Plus className="h-3 w-3" /> Postscript
+            </button>
+          )}
+        </div>
+
+        {showEditPreface && (
+          <div className="relative">
+            <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 text-amber-700">
+              Preface (Panduan Sebelum Kalimat)
+            </label>
+            <textarea
+              value={editPreface}
+              onChange={(e) => setEditPreface(e.target.value)}
+              placeholder="Tulis panduan taktis atau strategi komunikasi sebelum kalimat dibaca..."
+              className="w-full text-xs font-medium border border-amber-200 rounded-lg p-2.5 resize-none bg-amber-50/50 focus:bg-white outline-none font-sans"
+              rows={1.5}
+            />
+            <button 
+              type="button" 
+              onClick={() => { setShowEditPreface(false); setEditPreface(''); }}
+              className="absolute top-0 right-0 text-gray-400 hover:text-red-500 p-1 bg-white rounded-bl-lg"
+              title="Hapus Preface"
+            >
+              <Trash className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        )}
+
+        <div>
           <textarea
             value={editText}
             onChange={(e) => setEditText(e.target.value)}
             className="w-full text-xs font-semibold border border-gray-200 rounded-lg p-2.5 resize-none bg-gray-50 focus:bg-white outline-none font-sans"
-            rows={2}
+            rows={4}
           />
         </div>
 
-        <div>
-          <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
-            Postscript (Catatan/Insight Setelah Kalimat - Opsional)
-          </label>
-          <textarea
-            value={editPostscript}
-            onChange={(e) => setEditPostscript(e.target.value)}
-            placeholder="Tulis catatan taktis, wawasan, atau dampak komunikasi setelah kalimat dibaca..."
-            className="w-full text-xs font-medium border border-gray-200 rounded-lg p-2.5 resize-none bg-gray-50 focus:bg-white outline-none font-sans"
-            rows={1.5}
-          />
-        </div>
+        {showEditPostscript && (
+          <div className="relative">
+            <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 text-emerald-700">
+              Postscript (Catatan/Insight Setelah Kalimat)
+            </label>
+            <textarea
+              value={editPostscript}
+              onChange={(e) => setEditPostscript(e.target.value)}
+              placeholder="Tulis catatan taktis, wawasan, atau dampak komunikasi setelah kalimat dibaca..."
+              className="w-full text-xs font-medium border border-emerald-200 rounded-lg p-2.5 resize-none bg-emerald-50/50 focus:bg-white outline-none font-sans"
+              rows={1.5}
+            />
+            <button 
+              type="button" 
+              onClick={() => { setShowEditPostscript(false); setEditPostscript(''); }}
+              className="absolute top-0 right-0 text-gray-400 hover:text-red-500 p-1 bg-white rounded-bl-lg"
+              title="Hapus Postscript"
+            >
+              <Trash className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        )}
       </div>
       <div className="flex justify-end gap-2 text-[11px]">
         <button
@@ -223,7 +342,6 @@ export function ScriptBuilderSection({
         <div className="bg-amber-50/50 border border-amber-150 rounded-xl p-3.5 text-xs text-amber-800 font-semibold mb-2 leading-relaxed text-left flex items-start gap-2 shadow-xxs">
           <span className="text-base select-none mt-[-2px]">💡</span>
           <div className="flex-1">
-            <span className="text-[9px] font-black text-amber-900 uppercase tracking-wider block mb-0.5">Preface / Panduan Komunikasi:</span>
             "{sen.preface}"
           </div>
         </div>
@@ -276,7 +394,11 @@ export function ScriptBuilderSection({
             </button>
             <button
               type="button"
-              onClick={() => startEditingSentence(index, sen)}
+              onClick={() => {
+                setShowEditPreface(!!sen.preface);
+                setShowEditPostscript(!!sen.postscript);
+                startEditingSentence(index, sen);
+              }}
               className="p-1 text-indigo-500 hover:text-indigo-700 border border-indigo-100 rounded bg-indigo-50/50 hover:bg-indigo-50"
               title="Edit Baris"
             >
@@ -319,7 +441,6 @@ export function ScriptBuilderSection({
         <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-xs text-slate-500 font-semibold mt-2 leading-relaxed text-left flex items-start gap-2 shadow-xxs">
           <span className="text-base select-none mt-[-2px]">📝</span>
           <div className="flex-1">
-            <span className="text-[9px] font-black text-slate-650 uppercase tracking-wider block mb-0.5">Postscript / Analisis Taktis:</span>
             "{sen.postscript}"
           </div>
         </div>
@@ -393,50 +514,95 @@ export function ScriptBuilderSection({
         </div>
 
         <div className="space-y-3.5">
-          <div>
-            <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
-              Preface (Panduan Sebelum Kalimat - Opsional)
-            </label>
-            <textarea
-              value={newPreface}
-              onChange={(e) => setNewPreface(e.target.value)}
-              placeholder="Tulis panduan taktis atau strategi komunikasi sebelum kalimat dibaca..."
-              rows={1.5}
-              className="w-full text-xs font-medium border border-gray-200 p-2.5 rounded-lg bg-gray-50 focus:bg-white outline-none resize-none font-sans"
-            />
-          </div>
-
-          <div>
-            <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+          <div className="flex items-center gap-2 mb-1">
+            <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider flex-1">
               {labels.scriptTextLabel}
             </label>
+            {!showNewPreface && (
+              <button
+                type="button"
+                onClick={() => setShowNewPreface(true)}
+                className="text-[10px] font-bold text-amber-600 hover:text-amber-700 bg-amber-50 hover:bg-amber-100 px-2 py-0.5 rounded transition-colors flex items-center gap-1 cursor-pointer"
+              >
+                <Plus className="h-3 w-3" /> Preface
+              </button>
+            )}
+            {!showNewPostscript && (
+              <button
+                type="button"
+                onClick={() => setShowNewPostscript(true)}
+                className="text-[10px] font-bold text-emerald-600 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded transition-colors flex items-center gap-1 cursor-pointer"
+              >
+                <Plus className="h-3 w-3" /> Postscript
+              </button>
+            )}
+          </div>
+
+          {showNewPreface && (
+            <div className="relative">
+              <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 text-amber-700">
+                Preface (Panduan Sebelum Kalimat)
+              </label>
+              <textarea
+                value={newPreface}
+                onChange={(e) => setNewPreface(e.target.value)}
+                placeholder="Tulis panduan taktis atau strategi komunikasi sebelum kalimat dibaca..."
+                rows={1.5}
+                className="w-full text-xs font-medium border border-amber-200 p-2.5 rounded-lg bg-amber-50/50 focus:bg-white outline-none resize-none font-sans"
+              />
+              <button 
+                type="button" 
+                onClick={() => { setShowNewPreface(false); setNewPreface(''); }}
+                className="absolute top-0 right-0 text-gray-400 hover:text-red-500 p-1 bg-white rounded-bl-lg"
+                title="Hapus Preface"
+              >
+                <Trash className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
+
+          <div>
             <textarea
               value={newText}
               onChange={(e) => setNewText(e.target.value)}
               placeholder={labels.scriptTextPlaceholder}
-              rows={2}
+              rows={4}
               className="w-full text-xs font-semibold border border-gray-200 p-2.5 rounded-lg bg-gray-50 focus:bg-white outline-none resize-none font-sans"
             />
           </div>
 
-          <div>
-            <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
-              Postscript (Catatan/Insight Setelah Kalimat - Opsional)
-            </label>
-            <textarea
-              value={newPostscript}
-              onChange={(e) => setNewPostscript(e.target.value)}
-              placeholder="Tulis catatan taktis, wawasan, atau dampak komunikasi setelah kalimat dibaca..."
-              rows={1.5}
-              className="w-full text-xs font-medium border border-gray-200 p-2.5 rounded-lg bg-gray-50 focus:bg-white outline-none resize-none font-sans"
-            />
-          </div>
+          {showNewPostscript && (
+            <div className="relative">
+              <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 text-emerald-700">
+                Postscript (Catatan/Insight Setelah Kalimat)
+              </label>
+              <textarea
+                value={newPostscript}
+                onChange={(e) => setNewPostscript(e.target.value)}
+                placeholder="Tulis catatan taktis, wawasan, atau dampak komunikasi setelah kalimat dibaca..."
+                rows={1.5}
+                className="w-full text-xs font-medium border border-emerald-200 p-2.5 rounded-lg bg-emerald-50/50 focus:bg-white outline-none resize-none font-sans"
+              />
+              <button 
+                type="button" 
+                onClick={() => { setShowNewPostscript(false); setNewPostscript(''); }}
+                className="absolute top-0 right-0 text-gray-400 hover:text-red-500 p-1 bg-white rounded-bl-lg"
+                title="Hapus Postscript"
+              >
+                <Trash className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="flex justify-end pt-1">
           <button
             type="button"
-            onClick={addSentence}
+            onClick={() => {
+              addSentence();
+              setShowNewPreface(false);
+              setShowNewPostscript(false);
+            }}
             disabled={!newText.trim()}
             className="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 disabled:opacity-40 transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
           >

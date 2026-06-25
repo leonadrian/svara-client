@@ -1,21 +1,18 @@
 import React from 'react';
 import { 
   Mic, Play, Pause, Cloud, HardDrive, UploadCloud, Plus, Link2, 
-  Eye, RefreshCw, Search, Trash2, X, User
+  Eye, RefreshCw, Search, Trash2, X, User, Loader2
 } from 'lucide-react';
-import { UserProfile, BusinessScenario } from '../types/index';
+import { UserProfile, BusinessScenario, RecordingSessionViewModel } from '../../types/index';
 
-interface RecordingSessionViewerRenderProps {
+interface RecordingDashboardTabRenderProps {
   userProfile: UserProfile;
   scenarios: BusinessScenario[];
-  onClose: () => void;
-  onRefreshCloud: () => void;
+  onRefresh: () => void;
   userNamesMap?: Record<string, string>;
   onSelectRecording?: (recording: any) => void;
 
   // From hook state
-  localRecordings: any[];
-  loadingLocal: boolean;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   filterCategory: string;
@@ -39,31 +36,28 @@ interface RecordingSessionViewerRenderProps {
   setLinkingAgentId: (val: string) => void;
   linkingScenarioId: string;
   setLinkingScenarioId: (val: string) => void;
-  updatingLink: boolean;
   activePlayId: string | null;
   isPlaying: boolean;
   loadingAudioBlob: boolean;
-  uploadingId: string | null;
+  isUploading: boolean;
   agentsList: UserProfile[];
-  records: any[];
+  records: RecordingSessionViewModel[];
   
   // From hook functions
   handlePlayRecording: (recId: string, cloudAudioUrl?: string) => void;
-  handleUploadToCloud: (recId: string) => void;
+  handleUploadToCloud: (recId: string, localMeta: any) => void;
   handleAddExternalFile: (e: React.FormEvent) => void;
   handleLinkRecordingCredentials: (e: React.FormEvent) => void;
   handleDeleteLocalRecord: (id: string, name: string) => void;
 }
 
-export default function RecordingSessionViewerRender({
+export default function RecordingDashboardTabRender({
   userProfile,
   scenarios,
-  onClose,
+  onRefresh,
   userNamesMap,
   onSelectRecording,
 
-  localRecordings,
-  loadingLocal,
   searchQuery,
   setSearchQuery,
   filterCategory,
@@ -87,11 +81,10 @@ export default function RecordingSessionViewerRender({
   setLinkingAgentId,
   linkingScenarioId,
   setLinkingScenarioId,
-  updatingLink,
   activePlayId,
   isPlaying,
   loadingAudioBlob,
-  uploadingId,
+  isUploading,
   agentsList,
   records,
 
@@ -100,13 +93,13 @@ export default function RecordingSessionViewerRender({
   handleAddExternalFile,
   handleLinkRecordingCredentials,
   handleDeleteLocalRecord,
-}: RecordingSessionViewerRenderProps) {
+}: RecordingDashboardTabRenderProps) {
   const isAgent = userProfile.role === 'agent';
   const isTrainerOrManager = userProfile.role === 'trainer' || userProfile.role === 'manager' || userProfile.role === 'superadmin';
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto" id="recording-session-viewer-overlay">
-      <div className="bg-white border border-slate-200/80 shadow-2xl rounded-3xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-fade-in text-left">
+    <div className="w-full flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+      <div className="bg-white border border-slate-200/80 shadow-sm rounded-3xl w-full flex flex-col overflow-hidden text-left">
         
         {/* Header */}
         <div className="bg-gradient-to-r from-teal-800 to-slate-900 text-white p-5 flex items-center justify-between shrink-0">
@@ -121,12 +114,6 @@ export default function RecordingSessionViewerRender({
               <p className="text-[11px] text-teal-100">Kelola riwayat suara, buffer offline localstorage, dan putar modul rekaman svara secara interaktif.</p>
             </div>
           </div>
-          <button 
-            onClick={onClose}
-            className="text-white/80 hover:text-white p-1.5 rounded-xl text-xs bg-white/10 hover:bg-white/20 font-black cursor-pointer px-4 border border-white/5"
-          >
-            ✕ Tutup
-          </button>
         </div>
 
         {/* Content Board */}
@@ -162,12 +149,7 @@ export default function RecordingSessionViewerRender({
 
             {/* List */}
             <div className="flex-grow border border-slate-200 rounded-2xl bg-slate-50/50 overflow-y-auto max-h-[55vh]" style={{ minHeight: '120px' }}>
-              {loadingLocal ? (
-                <div className="p-12 text-center text-slate-400 font-semibold gap-2 flex flex-col items-center">
-                  <RefreshCw className="h-6 w-6 animate-spin text-teal-600" />
-                  <span>Membaca database IndexedDB...</span>
-                </div>
-              ) : records.length === 0 ? (
+              {records.length === 0 ? (
                 <div className="p-12 text-center text-slate-400 flex flex-col items-center justify-center space-y-2">
                   <HardDrive className="h-10 w-10 text-slate-300" />
                   <h4 className="font-bold text-slate-700 font-display">Log Rekaman Kosong</h4>
@@ -249,13 +231,13 @@ export default function RecordingSessionViewerRender({
 
                           {rec.hasLocal && !rec.hasCloud && (
                             <button
-                              onClick={() => handleUploadToCloud(rec.id)}
-                              disabled={uploadingId === rec.id}
+                              onClick={() => handleUploadToCloud(rec.id, rec)}
+                              disabled={isUploading}
                               className="px-2.5 py-1.5 bg-teal-600 hover:bg-teal-700 disabled:bg-teal-400 text-white rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1 cursor-pointer transition-colors"
                               title="Unggah berkas fisik audio ini ke Cloud database sekarang"
                             >
-                              {uploadingId === rec.id ? (
-                                <RefreshCw className="h-3 w-3 animate-spin" />
+                              {isUploading ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
                               ) : (
                                 <UploadCloud className="h-3.5 w-3.5" />
                               )}
@@ -430,10 +412,10 @@ export default function RecordingSessionViewerRender({
 
                 <button
                   type="submit"
-                  disabled={updatingLink}
+                  disabled={isUploading}
                   className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all cursor-pointer"
                 >
-                  {updatingLink ? 'Mengaitkan...' : 'Simpan Kaitan Akun'}
+                  {isUploading ? 'Mengaitkan...' : 'Simpan Kaitan Akun'}
                 </button>
               </form>
             )}

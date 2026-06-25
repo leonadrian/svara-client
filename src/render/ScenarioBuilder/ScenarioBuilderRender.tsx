@@ -3,7 +3,8 @@ import { ScenarioBuilderRenderProps, mergeLabels } from './types';
 import { HeaderSection, FooterSection } from './HeaderFooterSection';
 import { ErrorAlert, CoreInfoSection, TrainerAccessSection, EvaluationSection } from './Sections';
 import { ScriptBuilderSection } from './ScriptBuilderSection';
-import { Sparkles, X, PlusCircle, Copy, Search, ArrowLeft, BookOpen } from 'lucide-react';
+import { Sparkles, X, PlusCircle, Copy, Search, ArrowLeft, BookOpen, Printer } from 'lucide-react';
+import { openPrintDialog } from './ScenarioHtmlExporter';
 
 export type { ScenarioBuilderRenderProps };
 
@@ -16,6 +17,7 @@ export function ScenarioBuilderRender(props: ScenarioBuilderRenderProps) {
   const [creationMode, setCreationMode] = useState<'scratch' | 'template' | null>(null);
   const [templateLoaded, setTemplateLoaded] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showJsonModal, setShowJsonModal] = useState(false);
 
   const isEditing = !!props.editingScenario;
   const showSelection = !isEditing && !isReadOnly && creationMode === null;
@@ -34,7 +36,7 @@ export function ScenarioBuilderRender(props: ScenarioBuilderRenderProps) {
         <div className="bg-white w-full max-w-2xl rounded-2xl border border-gray-150 shadow-2xl overflow-hidden flex flex-col my-8 max-h-[90vh]">
           <div className="px-6 py-5 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <Sparkles className="h-5 w-5 text-indigo-650 animate-pulse animate-spin-slow" />
+              <Sparkles className="h-5 w-5 text-indigo-600 animate-pulse animate-spin-slow" />
               <h3 className="text-lg font-bold text-gray-900 tracking-tight">
                 Buat Skenario Baru
               </h3>
@@ -42,7 +44,7 @@ export function ScenarioBuilderRender(props: ScenarioBuilderRenderProps) {
             <button
               type="button"
               onClick={props.onClose}
-              className="text-gray-400 hover:text-gray-650 bg-white hover:bg-gray-100 p-1.5 rounded-lg border border-gray-250 transition-all cursor-pointer"
+              className="text-gray-400 hover:text-gray-600 bg-white hover:bg-gray-100 p-1.5 rounded-lg border border-gray-250 transition-all cursor-pointer"
             >
               <X className="h-4 w-4" />
             </button>
@@ -60,7 +62,7 @@ export function ScenarioBuilderRender(props: ScenarioBuilderRenderProps) {
                 onClick={() => setCreationMode('scratch')}
                 className="flex flex-col items-center text-center p-6 bg-white border border-gray-200 hover:border-indigo-300 hover:bg-indigo-50/10 rounded-2xl transition-all duration-300 group cursor-pointer shadow-sm hover:shadow-md"
               >
-                <div className="h-14 w-14 rounded-2xl bg-indigo-50 text-indigo-650 flex items-center justify-center mb-4 transition-colors group-hover:bg-indigo-100">
+                <div className="h-14 w-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-4 transition-colors group-hover:bg-indigo-100">
                   <PlusCircle className="h-7 w-7" />
                 </div>
                 <h4 className="text-sm font-extrabold text-slate-900 group-hover:text-indigo-700 transition-colors">
@@ -77,7 +79,7 @@ export function ScenarioBuilderRender(props: ScenarioBuilderRenderProps) {
                 onClick={() => setCreationMode('template')}
                 className="flex flex-col items-center text-center p-6 bg-white border border-gray-200 hover:border-emerald-300 hover:bg-emerald-50/10 rounded-2xl transition-all duration-300 group cursor-pointer shadow-sm hover:shadow-md"
               >
-                <div className="h-14 w-14 rounded-2xl bg-emerald-50 text-emerald-650 flex items-center justify-center mb-4 transition-colors group-hover:bg-emerald-100">
+                <div className="h-14 w-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4 transition-colors group-hover:bg-emerald-100">
                   <Copy className="h-6 w-6" />
                 </div>
                 <h4 className="text-sm font-extrabold text-slate-900 group-hover:text-emerald-700 transition-colors">
@@ -94,7 +96,7 @@ export function ScenarioBuilderRender(props: ScenarioBuilderRenderProps) {
             <button
               type="button"
               onClick={props.onClose}
-              className="px-4.5 py-2.5 border border-gray-250 hover:border-gray-350 bg-white hover:bg-gray-50 text-gray-650 text-xs font-bold rounded-xl transition-all cursor-pointer shadow-xxs font-semibold"
+              className="px-4.5 py-2.5 border border-gray-250 hover:border-gray-350 bg-white hover:bg-gray-50 text-gray-600 text-xs font-bold rounded-xl transition-all cursor-pointer shadow-xxs font-semibold"
             >
               Batal
             </button>
@@ -114,7 +116,7 @@ export function ScenarioBuilderRender(props: ScenarioBuilderRenderProps) {
               <button
                 type="button"
                 onClick={() => setCreationMode(null)}
-                className="text-gray-400 hover:text-gray-650 bg-white hover:bg-gray-50 p-1.5 rounded-lg border border-gray-200 transition-all cursor-pointer flex items-center justify-center"
+                className="text-gray-400 hover:text-gray-600 bg-white hover:bg-gray-50 p-1.5 rounded-lg border border-gray-200 transition-all cursor-pointer flex items-center justify-center"
               >
                 <ArrowLeft className="h-4 w-4" />
               </button>
@@ -125,7 +127,7 @@ export function ScenarioBuilderRender(props: ScenarioBuilderRenderProps) {
             <button
               type="button"
               onClick={props.onClose}
-              className="text-gray-400 hover:text-gray-650 bg-white hover:bg-gray-100 p-1.5 rounded-lg border border-gray-250 transition-all cursor-pointer"
+              className="text-gray-400 hover:text-gray-600 bg-white hover:bg-gray-100 p-1.5 rounded-lg border border-gray-250 transition-all cursor-pointer"
             >
               <X className="h-4 w-4" />
             </button>
@@ -187,7 +189,7 @@ export function ScenarioBuilderRender(props: ScenarioBuilderRenderProps) {
             <button
               type="button"
               onClick={() => setCreationMode(null)}
-              className="px-4.5 py-2.5 border border-gray-200 hover:bg-gray-105 text-gray-650 bg-white text-xs font-bold rounded-xl transition-all cursor-pointer font-semibold shadow-xxs"
+              className="px-4.5 py-2.5 border border-gray-200 hover:bg-gray-105 text-gray-600 bg-white text-xs font-bold rounded-xl transition-all cursor-pointer font-semibold shadow-xxs"
             >
               Kembali
             </button>
@@ -279,9 +281,85 @@ export function ScenarioBuilderRender(props: ScenarioBuilderRenderProps) {
           labels={labels.footer} isReadOnly={isReadOnly} submitting={props.submitting}
           onClose={props.onClose} onEditScenario={props.onEditScenario}
           onStartRoleplay={props.onStartRoleplay} handleSubmit={handleSubmit}
+          userRole={props.userRole} onViewJson={() => setShowJsonModal(true)}
+          onPrint={() => {
+            const tempScenario = {
+              title: props.title,
+              category: props.category,
+              description: props.description,
+              scenarioPoints: [
+                ...props.mandatoryPoints.map(p => ({ pointId: p.pointId, pointName: p.pointName, pointType: 'mandatory' })),
+                ...props.sellingPoints.map(p => ({ pointId: p.pointId, pointName: p.pointName, pointType: 'key_point' })),
+                ...props.qualificationCriteria.map(p => ({ pointId: p.pointId, pointName: p.pointName, pointType: 'qualification' }))
+              ],
+              sentences: props.sentences
+            } as any;
+            openPrintDialog(tempScenario, (props.allAvailablePoints || []) as any);
+          }}
         />
 
       </div>
+
+      {showJsonModal && (
+        <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-md flex items-center justify-center z-[100] p-4 font-sans">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[85vh]">
+            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-slate-50">
+              <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-[10px] uppercase tracking-widest">Dev Tools</span>
+                Scenario JSON Payload
+              </h3>
+              <button onClick={() => setShowJsonModal(false)} className="text-slate-400 hover:text-slate-600 bg-white hover:bg-slate-100 p-1 rounded-md transition-colors">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 bg-slate-900 text-left">
+              <pre className="text-xs text-emerald-400 font-mono whitespace-pre-wrap break-words">
+                {JSON.stringify({
+                  title: props.title,
+                  category: props.category,
+                  description: props.description,
+                  scenarioPoints: [
+                    ...props.mandatoryPoints.map(p => ({ ...p, pointType: 'mandatory' })),
+                    ...props.sellingPoints.map(p => ({ ...p, pointType: 'key_point' })),
+                    ...props.qualificationCriteria.map(p => ({ ...p, pointType: 'qualification' }))
+                  ],
+                  sentences: props.sentences
+                }, null, 2)}
+              </pre>
+            </div>
+            <div className="p-4 border-t border-gray-100 flex justify-end gap-3 bg-white">
+              <button 
+                type="button"
+                onClick={() => setShowJsonModal(false)} 
+                className="px-4 py-2 border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl text-xs font-semibold cursor-pointer"
+              >
+                Tutup
+              </button>
+              <button 
+                type="button"
+                onClick={() => {
+                  const jsonStr = JSON.stringify({
+                    title: props.title,
+                    category: props.category,
+                    description: props.description,
+                    scenarioPoints: [
+                      ...props.mandatoryPoints.map(p => ({ ...p, pointType: 'mandatory' })),
+                      ...props.sellingPoints.map(p => ({ ...p, pointType: 'key_point' })),
+                      ...props.qualificationCriteria.map(p => ({ ...p, pointType: 'qualification' }))
+                    ],
+                    sentences: props.sentences
+                  }, null, 2);
+                  navigator.clipboard.writeText(jsonStr);
+                  alert('JSON tersalin ke clipboard!');
+                }} 
+                className="px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold flex gap-2 items-center cursor-pointer shadow-md shadow-purple-500/20"
+              >
+                <Copy className="h-3.5 w-3.5" /> Salin JSON
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

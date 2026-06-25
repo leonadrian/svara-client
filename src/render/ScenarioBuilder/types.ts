@@ -26,7 +26,7 @@ export interface ChecklistLabels {
   description: string;
   placeholder: string;
   emptyText: string;
-  colorScheme: 'red' | 'rose' | 'teal';
+  colorScheme: 'red' | 'rose' | 'amber' | 'teal';
 }
 
 // --- Header ---
@@ -154,28 +154,28 @@ export const DEFAULT_LABELS: ScenarioBuilderLabels = {
   },
 
   evaluation: {
-    sectionTitle: 'Kriteria Penilaian & Evaluasi Percakapan',
-    sectionDescription: 'Tentukan metrik checklist kepatuhan yang harus dinilai secara otomatis oleh Svara AI Evaluator. Setelah ini dibuat, Anda bisa mengaitkannya dengan baris skrip Agen di atas.',
-    icon: React.createElement(Check, { className: 'h-4 w-4 text-indigo-650 border border-indigo-200 bg-indigo-50 rounded-md box-content p-1' }),
+    sectionTitle: 'Konteks & Poin Penting Skenario',
+    sectionDescription: 'Tentukan poin-poin penting (profil nasabah, aturan wajib, atau nilai promosi) yang menjadi dasar dari skenario ini untuk konteks agen.',
+    icon: React.createElement(Check, { className: 'h-4 w-4 text-indigo-600 border border-indigo-200 bg-indigo-50 rounded-md box-content p-1' }),
     mandatory: {
-      title: '🗣️ Poin Kepatuhan Kritis (Mandatory)',
-      description: 'Hal-hal yang WAJIB disebutkan Agen (misal: verifikasi nama, sapaan hangat, dsb.).',
-      placeholder: 'misal: Sebutkan nama instansi perusahaan',
-      emptyText: 'Belum ada poin kritis.',
+      title: '🗣️ Poin Wajib Skenario (Mandatory)',
+      description: 'Hal mendasar yang berhak dan wajib diketahui nasabah agar komunikasi transparan (misal: tujuan telepon, perekaman suara).',
+      placeholder: 'misal: Memverifikasi nama instansi perusahaan',
+      emptyText: 'Belum ada pesan wajib.',
       colorScheme: 'red',
     },
     keyPoints: {
-      title: '⭐ Poin Penyampaian Kunci (Key Points / USP)',
-      description: 'Nilai promosi atau nilai jual utama produk yang sebaiknya dipromosikan.',
+      title: '⭐ Poin Nilai Jual / Penawaran (Key Points)',
+      description: 'Manfaat atau keuntungan utama yang akan didapatkan nasabah dari produk/solusi ini.',
       placeholder: 'misal: Promo cashback 10% di e-commerce',
-      emptyText: 'Belum ada poin kunci.',
-      colorScheme: 'rose',
+      emptyText: 'Belum ada poin nilai jual.',
+      colorScheme: 'amber',
     },
     qualification: {
-      title: '📋 Syarat Kualifikasi Calon Debitur / Nasabah',
-      description: 'Informasi kelayakan yang wajib dicocokan atau dikonfirmasi dengan nasabah.',
+      title: '📋 Kriteria Profil Nasabah',
+      description: 'Kondisi nasabah yang memastikan bahwa penawaran atau solusi ini memang tepat sasaran untuk mereka.',
       placeholder: 'misal: Penghasilan minimum Rp 5juta per bulan',
-      emptyText: 'Belum ada syarat kualifikasi.',
+      emptyText: 'Belum ada kriteria profil.',
       colorScheme: 'teal',
     },
   },
@@ -184,7 +184,7 @@ export const DEFAULT_LABELS: ScenarioBuilderLabels = {
     sectionTitle: 'Rangkaian Skrip Percakapan Nasabah & Agent',
     sectionDescription: 'Buat skrip panduan model percakapan percabangan. Anda bisa mengaitkan setiap kalimat ucapan Agen dengan parameter \'Scenario Points\' kritis agar Agen tahu wadah penyampaian yang tepat.',
     sectionDescriptionReadOnly: 'Tinjau model rangkaian percakapan dialog panduan untuk Agen dan Nasabah.',
-    icon: React.createElement(MessageSquare, { className: 'h-4 w-5 text-indigo-650' }),
+    icon: React.createElement(MessageSquare, { className: 'h-4 w-5 text-indigo-600' }),
     emptyStateText: 'Belum ada baris skrip percakapan. Silakan tambahkan baris di bawah beralur tanya jawab.',
     addSectionTitle: 'Tambah Baris Skrip Baru',
     speakerLabel: 'Pengucap (Speaker)',
@@ -201,11 +201,11 @@ export const DEFAULT_LABELS: ScenarioBuilderLabels = {
     scriptTextLabel: 'Teks Ucapan Skrip Percakapan',
     scriptTextPlaceholder: 'Ketik teks percakapan yang harus diucapkan di sini...',
     addButtonText: 'Tambahkan ke Skrip',
-    pointSelectionTitle: 'Hubungkan Kalimat Dialog Ini Dengan Parameter Penilaian (Scenario Point)',
-    pointSelectionTitleEdit: 'Pilih Parameter Penilaian Terkait untuk Kalimat Ini',
+    pointSelectionTitle: 'KAITKAN KALIMAT DENGAN POIN SKENARIO (OPSIONAL)',
+    pointSelectionTitleEdit: 'KAITKAN KALIMAT DENGAN POIN SKENARIO (OPSIONAL)',
     saveEditText: 'Simpan Perubahan',
     cancelEditText: 'Batal',
-    pointHintText: 'Harus mengandung poin:',
+    pointHintText: 'Penerapan Poin Skenario:',
     speakerBadgeCustomer: 'Nasabah',
     speakerBadgeAgent: 'Agen',
   },
