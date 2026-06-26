@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { BusinessScenario, UserProfile, RecordingSessionStoredLocally } from '../types/index';
 import { saveLocalRecording } from '../localDb';
 import { convertWebmToMp3 } from './audioConverter';
+import { buildAgentSnapshot, buildScenarioSnapshot } from './transformers';
 
 export interface UseAudioRecorderOptions {
   activeScenario: BusinessScenario | null;
@@ -130,16 +131,8 @@ export function useAudioRecorder(options: UseAudioRecorderOptions) {
 
           const metadata: RecordingSessionStoredLocally = {
             id: tempId,
-            agentSnapshot: {
-              agentId: isTrainerRole && selectedAgent ? (selectedAgent.id === 'unregistered' || selectedAgent.id === '' ? null : selectedAgent.id) : userProfile.userId,
-              agentName: isTrainerRole && selectedAgent ? (selectedAgent.name || 'Belum Buat Akun (Temporary)') : userProfile.userName,
-              assignedTrainerId: isTrainerRole ? userProfile.userId : (userProfile.role === 'agent' ? (userProfile as any).assignedTrainer || 'self' : 'self'),
-              assignedTrainerName: isTrainerRole ? userProfile.userName : 'Self Review'
-            },
-            scenarioSnapshot: {
-              scenarioId: activeScenario?.scenarioId || 'manual',
-              scenarioTitle: activeScenario?.title || 'Latihan Mandiri / Bebas'
-            },
+            agentSnapshot: buildAgentSnapshot(userProfile, isTrainerRole, selectedAgent),
+            scenarioSnapshot: buildScenarioSnapshot(activeScenario),
             startedAt: new Date(startTimeRef.current).toISOString(),
             endedAt: new Date().toISOString(),
             recordedBy: userProfile.userId,

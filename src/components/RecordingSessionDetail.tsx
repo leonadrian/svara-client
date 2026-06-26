@@ -1,6 +1,6 @@
 import React from 'react';
 import { BusinessScenario } from '../types/index';
-import { useRecordingSessionDetail } from '../hooks/useRecording';
+import { useRecordingSessionDetail } from '../hooks/useRecordingSessionDetail';
 import RecordingSessionDetailRender from '../render/RecordingSessionDetailRender';
 
 interface RecordingSessionDetailProps {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { BusinessScenario, RecordingSession, UserProfile } from '../types/index';
-import { useSvaraStudioSimulation } from '../hooks/useRecording';
+import { useSvaraStudioSimulation } from '../hooks/useSvaraStudioSimulation';
 import { SvaraStudioRender } from '../render/SvaraStudioRender';
 
 export { Info, AlignLeft } from 'lucide-react';
